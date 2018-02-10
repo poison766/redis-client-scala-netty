@@ -3,7 +3,7 @@ package com.impactua.redis.codecs
 import java.util
 
 import com.impactua.redis._
-import com.impactua.redis.codecs.RedisArrayAgregator.AggregateState
+import com.impactua.redis.codecs.RedisArrayAgregatorDecoder.AggregateState
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToMessageDecoder
 
@@ -13,7 +13,7 @@ import scala.collection.mutable.ArrayBuffer
   * @author Yaroslav Derman <yaroslav.derman@gmail.com>.
   *         created on 13.03.2017.
   */
-class RedisArrayAgregator extends MessageToMessageDecoder[RedisMessage] {
+class RedisArrayAgregatorDecoder extends MessageToMessageDecoder[RedisMessage] {
 
   val queue: util.Deque[AggregateState] = new util.ArrayDeque[AggregateState]
 
@@ -57,7 +57,7 @@ class RedisArrayAgregator extends MessageToMessageDecoder[RedisMessage] {
 
 }
 
-object RedisArrayAgregator {
+object RedisArrayAgregatorDecoder {
 
   case class AggregateState(length: Int, msgs: ArrayBuffer[RedisMessage]) {
 
