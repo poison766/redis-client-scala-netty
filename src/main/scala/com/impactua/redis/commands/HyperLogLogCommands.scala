@@ -4,7 +4,6 @@ import com.impactua.redis.BinaryConverter
 import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.connections.{PfAdd, PfCount, PfMerge}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**

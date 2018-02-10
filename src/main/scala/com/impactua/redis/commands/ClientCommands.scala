@@ -4,9 +4,10 @@ import com.impactua.redis._
 import com.impactua.redis.connections._
 
 import scala.collection.{Set, mutable}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 private[redis] trait ClientCommands {
+  implicit val ctx: ExecutionContext
   protected val r: RedisConnection
   def await[T](f: Future[T]): T
 }

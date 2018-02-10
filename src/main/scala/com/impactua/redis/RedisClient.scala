@@ -7,8 +7,9 @@ import com.impactua.redis.commands._
 import com.impactua.redis.connections.{InMemoryRedisConnection, Netty4RedisConnection, RedisConnection}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
+import scala.concurrent.ExecutionContext.global
 
 object RedisClient {
 
@@ -20,7 +21,7 @@ object RedisClient {
 
   @throws(classOf[AuthenticationException])
   // redis://[:password@]host[:port][/db-number]
-  def apply(uri: String = "redis://localhost:6379", timeout: Duration = DEFAULT_TIMEOUT) = {
+  def apply(uri: String = "redis://localhost:6379", timeout: Duration = DEFAULT_TIMEOUT)(implicit ctx: ExecutionContext = global) = {
 
     val redisUri = new URI(uri)
 
@@ -56,12 +57,18 @@ object RedisClient {
 
 }
 
-class RedisClient(val r: RedisConnection, val timeout: Duration) extends GenericCommands with StringCommands
-                                             with HashCommands with ListCommands
-                                             with SetCommands with ScriptingCommands with PubSubCommands
-                                             with HyperLogLogCommands with SortedSetCommands {
+private[redis] class RedisClient(val r: RedisConnection,
+                                 val timeout: Duration)
+                                (implicit val ctx: ExecutionContext) extends GenericCommands with StringCommands
+  with HashCommands with ListCommands
+  with SetCommands with ScriptingCommands with PubSubCommands
+  with HyperLogLogCommands with SortedSetCommands {
 
   def isConnected: Boolean = r.isOpen
-  def shutdown() { r.shutdown() }
+
+  def shutdown() {
+    r.shutdown()
+  }
+
   def await[T](f: Future[T]) = Await.result[T](f, timeout)
 }

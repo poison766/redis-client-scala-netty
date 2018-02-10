@@ -7,7 +7,6 @@ import com.impactua.redis.utils.Options.Limit
 import com.impactua.redis.utils.SortedSetOptions.{Agregation, SumAgregation, ZaddOptions}
 
 import scala.collection.Set
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**

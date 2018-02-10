@@ -5,7 +5,6 @@ import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.connections._
 
 import scala.collection.Set
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**

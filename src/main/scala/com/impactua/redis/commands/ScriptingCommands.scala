@@ -4,8 +4,6 @@ import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.connections._
 import com.impactua.redis.{BinaryConverter, ScriptSyntaxException, UnsupportedResponseException}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 /**
  * http://redis.io/commands#scripting
  */
