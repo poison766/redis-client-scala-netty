@@ -23,6 +23,17 @@ Changes from [original version](https://github.com/andreyk0/redis-client-scala-n
 
 Unit tests assume redis is running on localhost on port 6379, THEY WILL FLUSH ALL DATA!
 
+## Instalation
+
+Add to `build.sbt`
+
+```scala
+resolvers += Resolver.bintrayRepo("yarosman", "maven")  
+libraryDependencies ++= Seq(
+    "com.impactua" %% "redis-scala" % "2.0.0"
+)
+```
+
 ## Example usage with scala REPL
 
 
