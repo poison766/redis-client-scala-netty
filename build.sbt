@@ -2,7 +2,7 @@ name := "redis-scala"
 
 organization := "com.impactua"
 
-version := sys.env.getOrElse("TRAVIS_TAG", "1.4.0-SNAPSHOT")
+version := sys.env.getOrElse("TRAVIS_TAG", "2.0.0")
 
 scalaVersion := "2.12.4"
 
