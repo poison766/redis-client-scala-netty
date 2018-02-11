@@ -2,8 +2,6 @@ package com.impactua.redis.commands
 
 import java.nio.charset.Charset
 
-import com.impactua.redis.commands.Cmd._
-
 private[redis] object Cmd {
 
   val charset = Charset.forName("UTF-8")
@@ -227,112 +225,6 @@ private[redis] object Cmd {
   val GEORADIUSBYMEMBER = "GEORADIUSBYMEMBER".getBytes
 }
 
-
 abstract class Cmd {
   def asBin: Seq[Array[Byte]]
 }
-
-sealed trait ArrayFlatten {
-  implicit val flattener2 = (t: (Array[Byte], Array[Byte])) ⇒ t._1.toList ::: t._2.toList
-
-  implicit val flattener3 = (t: (Array[Byte], Array[Byte], Array[Byte])) ⇒ t._1.toList ::: t._2.toList ::: t._3.toList
-}
-
-case class Exists(key: String) extends Cmd {
-  def asBin = Seq(EXISTS, key.getBytes(charset))
-}
-
-case class Type(key: String) extends Cmd {
-  def asBin = Seq(TYPE, key.getBytes(charset))
-}
-
-case class Del(keys: Seq[String]) extends Cmd {
-  def asBin = if(keys.length > 1)
-    DEL :: keys.toList.map(_.getBytes(charset))
-  else Seq(DEL, keys.head.getBytes(charset))
-}
-
-case class Rename(key: String, newKey: String, nx: Boolean) extends Cmd {
-  def asBin = Seq(if(nx) RENAMENX else RENAME, key.getBytes(charset), newKey.getBytes(charset))
-}
-
-case class Get(key: String) extends Cmd {
-  def asBin = Seq(GET, key.getBytes(charset))
-}
-
-case class MGet(keys: Seq[String]) extends Cmd {
-  def asBin = MGET :: keys.toList.map(_.getBytes(charset))
-}
-
-case class SetCmd(key: String,
-                  v: Array[Byte],
-                  expTime: Int,
-                  nx: Boolean = false,
-                  xx: Boolean = false) extends Cmd {
-
-  def asBin = {
-    var seq = Seq(SET, key.getBytes(charset), v)
-    if(expTime != -1) seq = seq ++ Seq(EX, expTime.toString.getBytes)
-
-    if(nx) {
-      seq = seq :+ NX
-    } else if(xx) {
-      seq = seq :+ XX
-    }
-
-    seq
-  }
-}
-
-case class MSet(kvs: Seq[(String, Array[Byte])]) extends Cmd {
-  def asBin = MSET :: kvs.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
-}
-
-case class SetNx(kvs: Seq[(String, Array[Byte])]) extends Cmd {
-  def asBin = MSETNX :: kvs.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
-}
-
-case class GetSet(key: String, v: Array[Byte]) extends Cmd {
-  def asBin = Seq(GETSET, key.getBytes(charset), v)
-}
-
-case class Incr(key: String, delta: Int = 1) extends Cmd {
-  def asBin = if(delta == 1) Seq(INCR, key.getBytes(charset))
-    else Seq(INCRBY, key.getBytes(charset), delta.toString.getBytes)
-}
-
-case class Decr(key: String, delta: Int = 1) extends Cmd {
-  def asBin = if(delta == 1) Seq(DECR, key.getBytes(charset))
-    else Seq(DECRBY, key.getBytes(charset), delta.toString.getBytes)
-}
-
-case class Append(key: String, v: Array[Byte]) extends Cmd {
-  def asBin = Seq(APPEND, key.getBytes(charset), v)
-}
-
-case class Getrange(key: String, startOffset: Int, endOffset: Int) extends Cmd {
-  def asBin = Seq(GETRANGE, key.getBytes(charset), startOffset.toString.getBytes, endOffset.toString.getBytes)
-}
-
-case class Expire(key: String, seconds: Int) extends Cmd {
-  def asBin = Seq(EXPIRE, key.getBytes(charset), seconds.toString.getBytes(charset))
-}
-
-case class Persist(key: String) extends Cmd {
-  def asBin = Seq(PERSIST, key.getBytes(charset))
-}
-
-case class Ttl(key: String) extends Cmd {
-  def asBin = Seq(TTL, key.getBytes(charset))
-}
-
-case class Keys(pattern: String) extends Cmd {
-  def asBin = Seq(KEYS, pattern.getBytes(charset))
-}
-
-// utils
-case class Ping() extends Cmd { def asBin = Seq(PING) }
-case class Info() extends Cmd { def asBin = Seq(INFO) }
-case class FlushAll() extends Cmd { def asBin = Seq(FLUSHALL) }
-case class Auth(password: String) extends Cmd { def asBin = Seq(AUTH, password.getBytes(charset)) }
-case class Select(db: Int) extends Cmd { def asBin = Seq(SELECT, db.toString.getBytes(charset)) }

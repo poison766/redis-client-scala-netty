@@ -2,6 +2,8 @@ package com.impactua.redis.commands
 
 import com.impactua.redis.BinaryConverter
 import com.impactua.redis.commands.ClientCommands._
+import com.impactua.redis.commands.Cmd._
+import com.impactua.redis.commands.StringCommands._
 import com.impactua.redis.connections._
 
 import scala.concurrent.Future
@@ -80,4 +82,64 @@ private[redis] trait StringCommands extends ClientCommands {
 
   def getrange[T](key: String, startOffset: Int, endOffset: Int)(implicit conv: BinaryConverter[T]): Option[T] =
     await { getrangeAsync(key, startOffset, endOffset)(conv) }
+}
+
+object StringCommands {
+  case class Get(key: String) extends Cmd {
+    def asBin = Seq(GET, key.getBytes(charset))
+  }
+
+  case class MGet(keys: Seq[String]) extends Cmd {
+    def asBin = MGET :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class SetCmd(key: String,
+                    v: Array[Byte],
+                    expTime: Int,
+                    nx: Boolean = false,
+                    xx: Boolean = false) extends Cmd {
+
+    def asBin = {
+      var seq = Seq(SET, key.getBytes(charset), v)
+      if (expTime != -1) seq = seq ++ Seq(EX, expTime.toString.getBytes)
+
+      if (nx) {
+        seq = seq :+ NX
+      } else if (xx) {
+        seq = seq :+ XX
+      }
+
+      seq
+    }
+  }
+
+  case class MSet(kvs: Seq[(String, Array[Byte])]) extends Cmd {
+    def asBin = MSET :: kvs.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+  }
+
+  case class SetNx(kvs: Seq[(String, Array[Byte])]) extends Cmd {
+    def asBin = MSETNX :: kvs.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+  }
+
+  case class GetSet(key: String, v: Array[Byte]) extends Cmd {
+    def asBin = Seq(GETSET, key.getBytes(charset), v)
+  }
+
+  case class Incr(key: String, delta: Int = 1) extends Cmd {
+    def asBin = if(delta == 1) Seq(INCR, key.getBytes(charset))
+    else Seq(INCRBY, key.getBytes(charset), delta.toString.getBytes)
+  }
+
+  case class Decr(key: String, delta: Int = 1) extends Cmd {
+    def asBin = if(delta == 1) Seq(DECR, key.getBytes(charset))
+    else Seq(DECRBY, key.getBytes(charset), delta.toString.getBytes)
+  }
+
+  case class Append(key: String, v: Array[Byte]) extends Cmd {
+    def asBin = Seq(APPEND, key.getBytes(charset), v)
+  }
+
+  case class Getrange(key: String, startOffset: Int, endOffset: Int) extends Cmd {
+    def asBin = Seq(GETRANGE, key.getBytes(charset), startOffset.toString.getBytes, endOffset.toString.getBytes)
+  }
 }

@@ -1,6 +1,8 @@
 package com.impactua.redis.commands
 
 import com.impactua.redis.commands.ClientCommands._
+import com.impactua.redis.commands.Cmd._
+import com.impactua.redis.commands.GenericCommands._
 import com.impactua.redis.connections._
 import com.impactua.redis.{BinaryConverter, KeyType, RedisClient}
 
@@ -77,5 +79,61 @@ private[redis] trait GenericCommands extends ClientCommands {
   def authAsync(password: String): Future[Boolean] = r.send(Auth(password)).map(okResultAsBoolean)
   def select(db: Int): Boolean = await(r.send(Select(db)).map(okResultAsBoolean))
   def selectAsync(db: Int): Future[Boolean] = r.send(Select(db)).map(okResultAsBoolean)
+
+}
+
+object GenericCommands {
+
+  case class Del(keys: Seq[String]) extends Cmd {
+    def asBin = DEL :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class Ping() extends Cmd {
+    def asBin = Seq(PING)
+  }
+
+  case class Info() extends Cmd {
+    def asBin = Seq(INFO)
+  }
+
+  case class FlushAll() extends Cmd {
+    def asBin = Seq(FLUSHALL)
+  }
+
+  case class Auth(password: String) extends Cmd {
+    def asBin = Seq(AUTH, password.getBytes(charset))
+  }
+
+  case class Select(db: Int) extends Cmd {
+    def asBin = Seq(SELECT, db.toString.getBytes(charset))
+  }
+
+  case class Expire(key: String, seconds: Int) extends Cmd {
+    def asBin = Seq(EXPIRE, key.getBytes(charset), seconds.toString.getBytes(charset))
+  }
+
+  case class Persist(key: String) extends Cmd {
+    def asBin = Seq(PERSIST, key.getBytes(charset))
+  }
+
+  case class Ttl(key: String) extends Cmd {
+    def asBin = Seq(TTL, key.getBytes(charset))
+  }
+
+  case class Keys(pattern: String) extends Cmd {
+    def asBin = Seq(KEYS, pattern.getBytes(charset))
+  }
+
+  case class Exists(key: String) extends Cmd {
+    def asBin = Seq(EXISTS, key.getBytes(charset))
+  }
+
+  case class Type(key: String) extends Cmd {
+    def asBin = Seq(TYPE, key.getBytes(charset))
+  }
+
+  case class Rename(key: String, newKey: String, nx: Boolean) extends Cmd {
+    def asBin = Seq(if (nx) RENAMENX else RENAME, key.getBytes(charset), newKey.getBytes(charset))
+  }
 
 }
