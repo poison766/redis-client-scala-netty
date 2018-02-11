@@ -3,7 +3,6 @@ package com.impactua.redis.commands
 import java.nio.charset.Charset
 
 import com.impactua.redis.commands.Cmd._
-import com.impactua.redis.connections.MultiBulkDataResult
 import com.impactua.redis.utils.Options.Limit
 import com.impactua.redis.utils.SortedSetOptions.{Agregation, SumAgregation, ZaddOptions}
 
@@ -331,50 +330,6 @@ case class Ttl(key: String) extends Cmd {
 
 case class Keys(pattern: String) extends Cmd {
   def asBin = Seq(KEYS, pattern.getBytes(charset))
-}
-
-// lists
-case class Rpush(key: String, v: Array[Byte]) extends Cmd {
-  def asBin = Seq(RPUSH, key.getBytes(charset), v)
-}
-
-case class Lpush(key: String, v: Array[Byte]) extends Cmd {
-  def asBin = Seq(LPUSH, key.getBytes(charset), v)
-}
-
-case class Llen(key: String) extends Cmd {
-  def asBin = Seq(LLEN, key.getBytes(charset))
-}
-
-case class Lrange(key: String, start: Int, end: Int) extends Cmd {
-  def asBin = Seq(LRANGE, key.getBytes(charset), start.toString.getBytes, end.toString.getBytes)
-}
-
-case class Ltrim(key: String, start: Int, end: Int) extends Cmd {
-  def asBin = Seq(LTRIM, key.getBytes(charset), start.toString.getBytes, end.toString.getBytes)
-}
-
-case class Lindex(key: String, idx: Int) extends Cmd {
-  def asBin = Seq(LINDEX, key.getBytes(charset), idx.toString.getBytes)
-}
-
-case class Lset(key: String, idx: Int, value: Array[Byte]) extends Cmd {
-  def asBin = Seq(LSET, key.getBytes(charset), idx.toString.getBytes, value)
-}
-
-case class Lrem(key: String, count: Int, value: Array[Byte]) extends Cmd {
-  def asBin = Seq(LREM, key.getBytes(charset), count.toString.getBytes, value)
-}
-
-case class Lpop(key: String) extends Cmd {
-  def asBin = Seq(LPOP, key.getBytes(charset))
-}
-case class Rpop(key: String) extends Cmd {
-  def asBin = Seq(RPOP, key.getBytes(charset))
-}
-
-case class RpopLpush(srcKey: String, destKey: String) extends Cmd {
-  def asBin = Seq(RPOPLPUSH, srcKey.getBytes(charset), destKey.getBytes(charset))
 }
 
 // sets
