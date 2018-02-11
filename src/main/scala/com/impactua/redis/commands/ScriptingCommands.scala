@@ -1,6 +1,8 @@
 package com.impactua.redis.commands
 
 import com.impactua.redis.commands.ClientCommands._
+import com.impactua.redis.commands.Cmd._
+import com.impactua.redis.commands.ScriptingCommands._
 import com.impactua.redis.connections._
 import com.impactua.redis.{BinaryConverter, ScriptSyntaxException, UnsupportedResponseException}
 
@@ -47,5 +49,32 @@ private[redis] trait ScriptingCommands extends ClientCommands {
 
   def scriptExists(script: String) = await { scriptExistsAsync(script) }
 
+}
+
+object ScriptingCommands {
+
+  case class Eval(script: String, kv: Seq[(String, Array[Byte])]) extends Cmd {
+    def asBin = EVAL :: script.getBytes(charset) :: kv.length.toString.getBytes :: kv.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+  }
+
+  case class EvalSha(digest: String, kv: Seq[(String, Array[Byte])]) extends Cmd {
+    def asBin = EVALSHA :: digest.getBytes(charset) :: kv.length.toString.getBytes :: kv.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+  }
+
+  case class ScriptLoad(script: String) extends Cmd {
+    def asBin = SCRIPT_LOAD :+ script.getBytes(charset)
+  }
+
+  case class ScriptKill() extends Cmd {
+    def asBin = SCRIPT_KILL
+  }
+
+  case class ScriptFlush() extends Cmd {
+    def asBin = SCRIPT_FLUSH
+  }
+
+  case class ScriptExists(script: String) extends Cmd {
+    def asBin = SCRIPT_EXISTS :+ script.getBytes(charset)
+  }
 
 }

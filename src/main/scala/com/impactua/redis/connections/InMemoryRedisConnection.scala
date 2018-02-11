@@ -5,6 +5,7 @@ import java.util.concurrent.{ConcurrentHashMap, Executors}
 
 import com.impactua.redis.commands.HashCommands._
 import com.impactua.redis.commands.PubSubCommands.{Publish, Subscribe, Unsubscribe}
+import com.impactua.redis.commands.ScriptingCommands.Eval
 import com.impactua.redis.commands._
 import com.impactua.redis.connections.ErrMessages._
 import com.impactua.redis.connections.InMemoryRedisConnection._
