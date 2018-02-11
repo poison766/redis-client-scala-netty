@@ -231,7 +231,7 @@ private[redis] object Cmd {
 }
 
 
-sealed abstract class Cmd {
+abstract class Cmd {
   def asBin: Seq[Array[Byte]]
 }
 
@@ -534,20 +534,6 @@ case class Unsubscribe(channels: Seq[String]) extends Cmd {
 
 case class UnsubscribeAll() extends Cmd {
   def asBin = Seq(UNSUBSCRIBE)
-}
-
-// hyper log log
-
-case class PfAdd(key: String, values: Seq[Array[Byte]]) extends Cmd {
-  def asBin = PFADD :: key.getBytes(charset) :: values.toList
-}
-
-case class PfCount(key: String) extends Cmd {
-  def asBin = Seq(PFCOUNT, key.getBytes(charset))
-}
-
-case class PfMerge(dst: String, keys: Seq[String]) extends Cmd {
-  def asBin = PFMERGE :: dst.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
 }
 
 // utils
