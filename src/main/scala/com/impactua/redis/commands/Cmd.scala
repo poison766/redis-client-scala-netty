@@ -512,30 +512,6 @@ case class Discard() extends Cmd { def asBin = Seq(DISCARD) }
 case class Watch(keys: Seq[String])  extends Cmd { def asBin = WATCH :: keys.map(_.getBytes(charset)).toList }
 case class Unwatch()  extends Cmd { def asBin = Seq(UNWATCH) }
 
-// pub/sub
-
-case class Publish(channel: String, v: Array[Byte]) extends Cmd {
-  def asBin = Seq(PUBLISH, channel.getBytes(charset), v)
-}
-
-case class Subscribe(channels: Seq[String], handler: MultiBulkDataResult => Unit) extends Cmd {
-  def asBin =
-    (if(hasPattern) PSUBSCRIBE else SUBSCRIBE) :: channels.toList.map(_.getBytes(charset))
-
-  def hasPattern = channels.exists(s => s.contains("*") || s.contains("?"))
-}
-
-case class Unsubscribe(channels: Seq[String]) extends Cmd {
-  def asBin =
-    (if(hasPattern) PUNSUBSCRIBE else UNSUBSCRIBE) :: channels.toList.map(_.getBytes(charset))
-
-  def hasPattern = channels.exists(s => s.contains("*") || s.contains("?"))
-}
-
-case class UnsubscribeAll() extends Cmd {
-  def asBin = Seq(UNSUBSCRIBE)
-}
-
 // utils
 case class Ping() extends Cmd { def asBin = Seq(PING) }
 case class Info() extends Cmd { def asBin = Seq(INFO) }

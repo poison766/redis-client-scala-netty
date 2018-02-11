@@ -2,6 +2,8 @@ package com.impactua.redis.commands
 
 import com.impactua.redis.BinaryConverter
 import com.impactua.redis.commands.ClientCommands._
+import com.impactua.redis.commands.Cmd._
+import com.impactua.redis.commands.PubSubCommands.{Publish, Subscribe, Unsubscribe, UnsubscribeAll}
 import com.impactua.redis.connections._
 
 import scala.concurrent.Future
@@ -45,4 +47,30 @@ private[redis] trait PubSubCommands extends ClientCommands {
   def unsubscribe(channels: String*) = await(unsubscribeAsync(channels:_*))
 
   def unsubscribe = await(r.send(UnsubscribeAll()))
+}
+
+object PubSubCommands {
+
+  case class Publish(channel: String, v: Array[Byte]) extends Cmd {
+    def asBin = Seq(PUBLISH, channel.getBytes(charset), v)
+  }
+
+  case class Subscribe(channels: Seq[String], handler: MultiBulkDataResult => Unit) extends Cmd {
+    def asBin =
+      (if (hasPattern) PSUBSCRIBE else SUBSCRIBE) :: channels.toList.map(_.getBytes(charset))
+
+    def hasPattern = channels.exists(s => s.contains("*") || s.contains("?"))
+  }
+
+  case class Unsubscribe(channels: Seq[String]) extends Cmd {
+    def asBin =
+      (if (hasPattern) PUNSUBSCRIBE else UNSUBSCRIBE) :: channels.toList.map(_.getBytes(charset))
+
+    def hasPattern = channels.exists(s => s.contains("*") || s.contains("?"))
+  }
+
+  case class UnsubscribeAll() extends Cmd {
+    def asBin = Seq(UNSUBSCRIBE)
+  }
+
 }

@@ -1,7 +1,8 @@
 package com.impactua.redis.connections
 
 import com.impactua.redis.RedisException
-import com.impactua.redis.commands.{Cmd, Subscribe, Unsubscribe}
+import com.impactua.redis.commands.Cmd
+import com.impactua.redis.commands.PubSubCommands.{Subscribe, Unsubscribe}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Promise
