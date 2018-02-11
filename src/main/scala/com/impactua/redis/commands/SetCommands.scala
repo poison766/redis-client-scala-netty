@@ -2,7 +2,8 @@ package com.impactua.redis.commands
 
 import com.impactua.redis.BinaryConverter
 import com.impactua.redis.commands.ClientCommands._
-import com.impactua.redis.connections._
+import com.impactua.redis.commands.Cmd._
+import com.impactua.redis.commands.SetCommands._
 
 import scala.collection.Set
 import scala.concurrent.Future
@@ -81,5 +82,65 @@ private[redis] trait SetCommands extends ClientCommands {
     r.send(Srandmember(key)).map(bulkDataResultToOpt(conv))
 
   def srandmember[T](key: String)(implicit conv: BinaryConverter[T]): Option[T] = await { srandmemberAsync(key)(conv) }
+
+}
+
+object SetCommands {
+
+  case class Sadd(key: String, values: Seq[Array[Byte]]) extends Cmd {
+    def asBin = Seq(SADD, key.getBytes(charset)) ++ values
+  }
+
+  case class Srem(key: String, v: Array[Byte]) extends Cmd {
+    def asBin = Seq(SREM, key.getBytes(charset), v)
+  }
+
+  case class Spop(key: String) extends Cmd {
+    def asBin = Seq(SPOP, key.getBytes(charset))
+  }
+
+  case class Smove(srcKey: String, destKey: String, value: Array[Byte]) extends Cmd {
+    def asBin = Seq(SMOVE, srcKey.getBytes(charset), destKey.getBytes(charset), value)
+  }
+
+  case class Scard(key: String) extends Cmd {
+    def asBin = Seq(SCARD, key.getBytes(charset))
+  }
+
+  case class Sismember(key: String, v: Array[Byte]) extends Cmd {
+    def asBin = Seq(SISMEMBER, key.getBytes(charset), v)
+  }
+
+  case class Sinter(keys: Seq[String]) extends Cmd {
+    def asBin = SINTER :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class Sinterstore(destKey: String, keys: Seq[String]) extends Cmd {
+    def asBin = SINTERSTORE :: destKey.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class Sunion(keys: Seq[String]) extends Cmd {
+    def asBin = SUNION :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class Sunionstore(destKey: String, keys: Seq[String]) extends Cmd {
+    def asBin = SUNIONSTORE :: destKey.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class Sdiff(keys: Seq[String]) extends Cmd {
+    def asBin = SDIFF :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class Sdiffstore(destKey: String, keys: Seq[String]) extends Cmd {
+    def asBin = SDIFFSTORE :: destKey.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
+  }
+
+  case class Smembers(key: String) extends Cmd {
+    def asBin = Seq(SMEMBERS, key.getBytes(charset))
+  }
+
+  case class Srandmember(key: String) extends Cmd {
+    def asBin = Seq(SRANDMEMBER, key.getBytes(charset))
+  }
 
 }
