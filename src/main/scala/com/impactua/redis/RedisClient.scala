@@ -60,7 +60,7 @@ object RedisClient {
 private[redis] class RedisClient(val r: RedisConnection,
                                  val timeout: Duration)
                                 (implicit val ctx: ExecutionContext) extends GenericCommands with StringCommands
-  with HashCommands with ListCommands
+  with HashCommands with ListCommands with TransactionsCommands
   with SetCommands with ScriptingCommands with PubSubCommands
   with HyperLogLogCommands with SortedSetCommands {
 

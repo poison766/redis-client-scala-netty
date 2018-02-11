@@ -10,7 +10,6 @@ import scala.concurrent.Future
 /**
  * http://redis.io/commands#generic
  * http://redis.io/commands#connection
- * http://redis.io/commands#transactions
  */
 private[redis] trait GenericCommands extends ClientCommands {
   self: RedisClient =>
@@ -78,21 +77,5 @@ private[redis] trait GenericCommands extends ClientCommands {
   def authAsync(password: String): Future[Boolean] = r.send(Auth(password)).map(okResultAsBoolean)
   def select(db: Int): Boolean = await(r.send(Select(db)).map(okResultAsBoolean))
   def selectAsync(db: Int): Future[Boolean] = r.send(Select(db)).map(okResultAsBoolean)
-  def discardAsync() = r.send(Discard())
-  def multiAsync() = r.send(Multi()).map(okResultAsBoolean)
-  def execAsync() = r.send(Exec()).map(multiBulkDataResultToSet(BinaryConverter.StringConverter))
-  def watchAsync(keys: String*) = r.send(Watch(keys))
-  def unwatchAsync() = r.send(Unwatch())
 
-  def withTransaction(block: RedisClient => Unit) = {
-    multiAsync()
-    try {
-      block(self)
-      execAsync()
-    } catch {
-      case e: Exception =>
-        discardAsync()
-        throw e
-    }
-  }
 }

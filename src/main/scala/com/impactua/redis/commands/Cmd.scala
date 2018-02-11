@@ -330,14 +330,6 @@ case class Keys(pattern: String) extends Cmd {
   def asBin = Seq(KEYS, pattern.getBytes(charset))
 }
 
-// transactioning
-
-case class Multi() extends Cmd { def asBin = Seq(MULTI) }
-case class Exec() extends Cmd { def asBin = Seq(EXEC) }
-case class Discard() extends Cmd { def asBin = Seq(DISCARD) }
-case class Watch(keys: Seq[String])  extends Cmd { def asBin = WATCH :: keys.map(_.getBytes(charset)).toList }
-case class Unwatch()  extends Cmd { def asBin = Seq(UNWATCH) }
-
 // utils
 case class Ping() extends Cmd { def asBin = Seq(PING) }
 case class Info() extends Cmd { def asBin = Seq(INFO) }
