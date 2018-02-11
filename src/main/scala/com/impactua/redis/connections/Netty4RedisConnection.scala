@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import com.impactua.redis.RedisException
 import com.impactua.redis.codecs._
+import com.impactua.redis.commands.Cmd
 import com.impactua.redis.connections.Netty4RedisConnection._
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.Unpooled

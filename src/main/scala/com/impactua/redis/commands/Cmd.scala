@@ -1,7 +1,9 @@
-package com.impactua.redis.connections
+package com.impactua.redis.commands
 
 import java.nio.charset.Charset
 
+import com.impactua.redis.commands.Cmd._
+import com.impactua.redis.connections.MultiBulkDataResult
 import com.impactua.redis.utils.Options.Limit
 import com.impactua.redis.utils.SortedSetOptions.{Agregation, SumAgregation, ZaddOptions}
 
@@ -228,7 +230,7 @@ private[redis] object Cmd {
   val GEORADIUSBYMEMBER = "GEORADIUSBYMEMBER".getBytes
 }
 
-import com.impactua.redis.connections.Cmd._
+
 sealed abstract class Cmd {
   def asBin: Seq[Array[Byte]]
 }

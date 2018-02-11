@@ -1,5 +1,7 @@
 package com.impactua.redis.connections
 
+import com.impactua.redis.commands.Cmd
+
 import scala.concurrent.Future
 
 /**

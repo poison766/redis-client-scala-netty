@@ -3,6 +3,8 @@ package com.impactua.redis.connections
 import java.util
 import java.util.concurrent.{BlockingQueue, TimeUnit}
 
+import com.impactua.redis.commands.{Subscribe, Unsubscribe}
+
 /**
   * Connection can operate in two states: Normal which is used for all major commands and
   * Subscribed with reduced commands set and receiving responses without issuing commands.

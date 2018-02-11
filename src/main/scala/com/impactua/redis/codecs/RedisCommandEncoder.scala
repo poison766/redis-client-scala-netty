@@ -1,6 +1,6 @@
 package com.impactua.redis.codecs
 
-import com.impactua.redis.connections.Cmd._
+import com.impactua.redis.commands.Cmd._
 import com.impactua.redis.connections.ResultFuture
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandler.Sharable
