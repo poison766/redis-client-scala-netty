@@ -543,31 +543,6 @@ case class FlushAll() extends Cmd { def asBin = Seq(FLUSHALL) }
 case class Auth(password: String) extends Cmd { def asBin = Seq(AUTH, password.getBytes(charset)) }
 case class Select(db: Int) extends Cmd { def asBin = Seq(SELECT, db.toString.getBytes(charset)) }
 
-// geo
-
-case class GeoAdd(key: String, values: Seq[(Array[Byte],Array[Byte],Array[Byte])]) extends Cmd with ArrayFlatten {
-  def asBin = Seq(GEOADD, values.flatten.toArray)
-}
-
-case class GeoDist(key: String, member1: String, member2: String, unit: String) extends Cmd {
-  def asBin = if ("m".equals(unit)) {
-    List(GEODIST, member1.getBytes(charset), member2.getBytes(charset))
-  } else {
-    List(GEODIST, member1.getBytes(charset), member2.getBytes(charset), unit.getBytes(charset))
-  }
-}
-
-case class GeoHash(key: String, members: Seq[String]) extends Cmd {
-  def asBin = GEOHASH :: key.getBytes(charset) :: members.map(_.getBytes(charset)).toList
-}
-
-case class GeoPos(key: String, members: Seq[String]) extends Cmd {
-  def asBin = GEOPOS :: key.getBytes(charset) :: members.map(_.getBytes(charset)).toList
-}
-// TODO: case class GeoRadius extends Cmd { def asBin = GAORADIUS :: Nil }
-
-// TODO: case class GeoRadiusByMember extends Cmd { def asBin = GEORADIUSBYMEMBER :: Nil }
-
 //sorted set
 case class Zadd(key: String, values: Seq[(Float, Array[Byte])], opts: ZaddOptions = ZaddOptions()) extends Cmd {
   def asBin = Seq(ZADD, key.getBytes(charset)) ++ opts.asBin ++ values.flatMap(kv => List(kv._1.toString.getBytes, kv._2))

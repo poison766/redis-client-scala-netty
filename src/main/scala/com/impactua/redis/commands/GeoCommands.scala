@@ -1,7 +1,8 @@
 package com.impactua.redis.commands
 
 import com.impactua.redis.commands.ClientCommands._
-import com.impactua.redis.connections._
+import com.impactua.redis.commands.Cmd._
+import com.impactua.redis.commands.GeoCommands.{GeoAdd, GeoDist, GeoHash, GeoPos}
 import com.impactua.redis.{BinaryConverter, GeoUnit, RedisClient}
 
 import scala.concurrent.Future
@@ -39,4 +40,37 @@ private[redis] trait GeoCommands extends ClientCommands {
 
   def geoPos(key: String, members: String*): Seq[String] = await { geoPosAsync(key, members:_*) }
 
+}
+
+object GeoCommands {
+
+  trait ArrayFlatten {
+    implicit val flattener2 = (t: (Array[Byte], Array[Byte])) ⇒ t._1.toList ::: t._2.toList
+
+    implicit val flattener3 = (t: (Array[Byte], Array[Byte], Array[Byte])) ⇒ t._1.toList ::: t._2.toList ::: t._3.toList
+  }
+
+  case class GeoAdd(key: String, values: Seq[(Array[Byte], Array[Byte], Array[Byte])]) extends Cmd with ArrayFlatten {
+    def asBin = Seq(GEOADD, values.flatten.toArray)
+  }
+
+  case class GeoDist(key: String, member1: String, member2: String, unit: String) extends Cmd {
+    def asBin = if ("m".equals(unit)) {
+      List(GEODIST, member1.getBytes(charset), member2.getBytes(charset))
+    } else {
+      List(GEODIST, member1.getBytes(charset), member2.getBytes(charset), unit.getBytes(charset))
+    }
+  }
+
+  case class GeoHash(key: String, members: Seq[String]) extends Cmd {
+    def asBin = GEOHASH :: key.getBytes(charset) :: members.map(_.getBytes(charset)).toList
+  }
+
+  case class GeoPos(key: String, members: Seq[String]) extends Cmd {
+    def asBin = GEOPOS :: key.getBytes(charset) :: members.map(_.getBytes(charset)).toList
+  }
+
+  // TODO: case class GeoRadius extends Cmd { def asBin = GAORADIUS :: Nil }
+
+  // TODO: case class GeoRadiusByMember extends Cmd { def asBin = GEORADIUSBYMEMBER :: Nil }
 }
