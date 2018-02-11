@@ -23,11 +23,22 @@ Changes from [original version](https://github.com/andreyk0/redis-client-scala-n
 
 Unit tests assume redis is running on localhost on port 6379, THEY WILL FLUSH ALL DATA!
 
+## Instalation
+
+Add to `build.sbt`
+
+```scala
+resolvers += Resolver.bintrayRepo("yarosman", "maven")  
+libraryDependencies ++= Seq(
+    "com.impactua" %% "redis-scala" % "2.0.0"
+)
+```
+
 ## Example usage with scala REPL
 
 
 ```scala
-    import com.fotolog.redis.RedisClient
+    import com.impactua.redis.RedisClient
 
     val r = RedisClient("redis://:db_password@localhost:6379")
 
@@ -52,7 +63,7 @@ Unit tests assume redis is running on localhost on port 6379, THEY WILL FLUSH AL
 For convenience any API method has both synchronous and asynchronous versions:
 
 ```scala
-    import com.fotolog.redis.RedisClient
+    import com.impactua.redis.RedisClient
     val r = RedisClient("redis://localhost")
     val fooFuture = r.getAsync[String]("foo")
 
@@ -63,7 +74,7 @@ For convenience any API method has both synchronous and asynchronous versions:
 Synchronous methods by default wait up to 1 minute for the future to complete, but one can specify duration on client initialization:
 
 ```scala
-    import com.fotolog.redis.RedisClient
+    import com.impactua.redis.RedisClient
     import scala.concurrent.duration._
 
     val r = RedisClient("redis://localhost", timeout = 20 seconds)
@@ -73,7 +84,7 @@ Synchronous methods by default wait up to 1 minute for the future to complete, b
 Dealing with Lua scripts:
 
 ```scala
-    import com.fotolog.redis.RedisClient
+    import com.impactua.redis.RedisClient
     val r = RedisClient("redis://localhost")
     
     val resultsList = r.eval[Int]("return ARGV[1];", ("anyKey", "2"))
@@ -85,7 +96,7 @@ Dealing with Lua scripts:
 Hyper Log Log:
 
 ```scala
-    import com.fotolog.redis.RedisClient
+    import com.impactua.redis.RedisClient
     val r = RedisClient("redis://localhost")
     val anyAddedH1 = r.pfadd("h1", "a", "b", "c", "d") // true
     val anyAddedH2 = r.pfadd("h2", "a", "b", "f", "g") // true
@@ -99,7 +110,7 @@ Hyper Log Log:
 Sharding example:
 
 ```scala
-    import com.fotolog.redis.{RedisCluster, RedisClient}
+    import com.impactua.redis.{RedisCluster, RedisClient}
 
     val shardingHashFunc = (s:String) => s.hashCode // shard on string values
     val cluster = new RedisCluster[String](shardingHashFunc, "redis://localhost:6379" /*, more redis hosts */)
@@ -150,7 +161,7 @@ Redlock is a distributed lock implementation on multiple (or one) redis instance
 Usage example:
 
 ```scala
-    import com.fotolog.redis.primitives.Redlock
+    import com.impactua.redis.primitives.Redlock
     
     val redlock = Redlock("redis://192.168.2.11", "redis://192.168.2.12", "redis://192.168.2.13")
 

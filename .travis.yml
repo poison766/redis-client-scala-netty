@@ -1,31 +1,19 @@
+sudo: required
 language: scala
 scala:
-- 2.12.4
+  - 2.12.4
 jdk:
   - oraclejdk8
-env:
-  global:
-  - REDIS_TAG=3.2.0
-  - secure: V+QVQZfSYPjdPfBiKsPta63CaIA33Xl6UhTZrWD+KCQ4AXjEKWdIag54ABAAw7gMt6lfVgq4R5J8WiTcAbFVXY62gN4OxzmdUxyOvcgexUAxraQV7QcKNu4TFsMGoSSUv9OM/+CbAyvFWsPXVEAQ/L9GsdmaXjNd6s6ggMr6gLs=
-  - secure: hQYfRhuuMhvOUiPPsK2xeFpqgv0pzMhw/9EiK1t+MuqyvSAdE159qzKciNprFmGbi6FDgKSu7E7745ukogSrENA2g9tcJR/YP++V/nuxTosH3CCuBDvmALkmYusY6fpYn1c238eB8Uka0X9tU46riU5LhKPaWcdJ0o2p6LW+rTQ=
+services:
+  - docker
 
 before_install:
-  - export REDIS_BIN=$HOME/redis/${REDIS_TAG}/bin
-  - |
-    if [ ! -x "$REDIS_BIN/redis-server" ]; then
-      # For proper caching we must build all redis versions
-      wget -c https://github.com/antirez/redis/archive/${REDIS_TAG}.tar.gz -O redis-${REDIS_TAG}.tar.gz
-      tar -xvf redis-${REDIS_TAG}.tar.gz
-      make -C redis-${REDIS_TAG} PREFIX=$HOME/redis/${REDIS_TAG} install
-    fi
+  - docker pull redis:3.2-alpine
+  - docker run --name redis -d -p 6379:6379 redis:3.2-alpine
+  - docker ps -a
 
 before_script:
-  - '$REDIS_BIN/redis-server --daemonize yes --pidfile ./redis-server.pid --unixsocket
-    /tmp/aioredis.sock --port 6379 --save ""
-    '
   - sleep 3
-  - export REDIS_VERSION="$(redis-cli INFO SERVER | sed -n 2p)"
-  - echo $REDIS_VERSION
 
 cache:
   directories:
