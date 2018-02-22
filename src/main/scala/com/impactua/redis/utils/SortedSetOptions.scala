@@ -26,7 +26,7 @@ object SortedSetOptions {
   }
 
   object ZaddOptions {
-    sealed class ModifyOpts(name: String) {
+    sealed abstract class ModifyOpts(name: String) {
       def asBin = name.getBytes
     }
 

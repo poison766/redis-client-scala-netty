@@ -4,6 +4,8 @@ import com.impactua.redis.BinaryConverter
 import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.commands.Cmd._
 import com.impactua.redis.commands.ListCommands._
+import com.impactua.redis.utils.ListOptions.LinsertOptions
+import com.impactua.redis.utils.ListOptions.LinsertOptions.DirectionOpts
 
 import scala.concurrent.Future
 
@@ -17,13 +19,24 @@ private[redis] trait ListCommands extends ClientCommands {
 
   def rpush[T](key: String, value: T)(implicit conv: BinaryConverter[T]): Int = await { rpushAsync(key, value)(conv) }
 
+  def rpushxAsync[T](key: String, value: T)(implicit conv: BinaryConverter[T]): Future[Int] =
+    r.send(Rpushx(key, conv.write(value) )).map(integerResultAsInt)
+
+  def rpushx[T](key: String, value: T)(implicit conv: BinaryConverter[T]): Int = await { rpushxAsync(key, value)(conv) }
+
   def lpushAsync[T](key: String, value: T)(implicit conv: BinaryConverter[T]): Future[Int] =
     r.send(Lpush(key, conv.write(value) )).map(integerResultAsInt)
 
   def lpush[T](key: String, value: T)(implicit conv: BinaryConverter[T]): Int = await {  lpushAsync(key, value)(conv) }
 
-  def llenAsync[T](key: String): Future[Int] = r.send(Llen(key)).map(integerResultAsInt)
-  def llen[T](key: String): Int = await {  llenAsync(key) }
+  def lpushxAsync[T](key: String, value: T)(implicit conv: BinaryConverter[T]): Future[Int] =
+    r.send(Lpushx(key, conv.write(value) )).map(integerResultAsInt)
+
+  def lpushx[T](key: String, value: T)(implicit conv: BinaryConverter[T]): Int = await {  lpushxAsync(key, value)(conv) }
+
+  def llenAsync(key: String): Future[Int] = r.send(Llen(key)).map(integerResultAsInt)
+
+  def llen(key: String): Int = await {  llenAsync(key) }
 
   def lrangeAsync[T](key: String, start: Int, end: Int)(implicit conv: BinaryConverter[T]): Future[Seq[T]] =
     r.send(Lrange(key, start, end)).map(multiBulkDataResultToFilteredSeq(conv))
@@ -40,6 +53,13 @@ private[redis] trait ListCommands extends ClientCommands {
     r.send(Lindex(key, idx)).map(bulkDataResultToOpt(conv))
 
   def lindex[T](key: String, idx: Int)(implicit conv: BinaryConverter[T]): Option[T] = await { lindexAsync(key, idx)(conv) }
+
+  def linsertAsync[T](key: String, pivot: T, value: T, direction: DirectionOpts = LinsertOptions.Before)(implicit conv: BinaryConverter[T]): Future[Int] =
+    r.send(Linsert(key, direction, conv.write(pivot), conv.write(value))).map(integerResultAsInt)
+
+  def linsert[T](key: String, pivot: T, value: T, direction: DirectionOpts = LinsertOptions.Before)(implicit conv: BinaryConverter[T]): Int = await {
+    linsertAsync(key, pivot, value, direction)
+  }
 
   def lsetAsync[T](key: String, idx: Int, value: T)(implicit conv: BinaryConverter[T]): Future[Boolean] =
     r.send(Lset(key, idx, conv.write(value))).map(okResultAsBoolean)
@@ -68,52 +88,68 @@ private[redis] trait ListCommands extends ClientCommands {
 
   def rpoplpush[T](srcKey: String, destKey: String)(implicit conv: BinaryConverter[T]): Option[T] =
     await { rpoplpushAsync(srcKey, destKey)(conv) }
+
 }
 
 object ListCommands {
 
+  val stringConverter = BinaryConverter.StringConverter
+  val intConverter = BinaryConverter.IntConverter
+
   case class Rpush(key: String, v: Array[Byte]) extends Cmd {
-    def asBin = Seq(RPUSH, key.getBytes(charset), v)
+    def asBin = Seq(RPUSH, stringConverter.write(key), v)
   }
 
   case class Lpush(key: String, v: Array[Byte]) extends Cmd {
-    def asBin = Seq(LPUSH, key.getBytes(charset), v)
+    def asBin = Seq(LPUSH, stringConverter.write(key), v)
   }
 
   case class Llen(key: String) extends Cmd {
-    def asBin = Seq(LLEN, key.getBytes(charset))
+    def asBin = Seq(LLEN, stringConverter.write(key))
   }
 
   case class Lrange(key: String, start: Int, end: Int) extends Cmd {
-    def asBin = Seq(LRANGE, key.getBytes(charset), start.toString.getBytes, end.toString.getBytes)
+    def asBin = Seq(LRANGE, stringConverter.write(key), intConverter.write(start), intConverter.write(end))
   }
 
   case class Ltrim(key: String, start: Int, end: Int) extends Cmd {
-    def asBin = Seq(LTRIM, key.getBytes(charset), start.toString.getBytes, end.toString.getBytes)
+    def asBin = Seq(LTRIM, stringConverter.write(key), intConverter.write(start), intConverter.write(end))
   }
 
   case class Lindex(key: String, idx: Int) extends Cmd {
-    def asBin = Seq(LINDEX, key.getBytes(charset), idx.toString.getBytes)
+    def asBin = Seq(LINDEX, stringConverter.write(key), intConverter.write(idx))
   }
 
   case class Lset(key: String, idx: Int, value: Array[Byte]) extends Cmd {
-    def asBin = Seq(LSET, key.getBytes(charset), idx.toString.getBytes, value)
+    def asBin = Seq(LSET, stringConverter.write(key), intConverter.write(idx), value)
   }
 
   case class Lrem(key: String, count: Int, value: Array[Byte]) extends Cmd {
-    def asBin = Seq(LREM, key.getBytes(charset), count.toString.getBytes, value)
+    def asBin = Seq(LREM, stringConverter.write(key), intConverter.write(count), value)
   }
 
   case class Lpop(key: String) extends Cmd {
-    def asBin = Seq(LPOP, key.getBytes(charset))
+    def asBin = Seq(LPOP, stringConverter.write(key))
   }
 
   case class Rpop(key: String) extends Cmd {
-    def asBin = Seq(RPOP, key.getBytes(charset))
+    def asBin = Seq(RPOP, stringConverter.write(key))
   }
 
   case class RpopLpush(srcKey: String, destKey: String) extends Cmd {
-    def asBin = Seq(RPOPLPUSH, srcKey.getBytes(charset), destKey.getBytes(charset))
+    def asBin = Seq(RPOPLPUSH, stringConverter.write(srcKey), stringConverter.write(destKey))
+  }
+
+  case class Rpushx(key: String, v: Array[Byte]) extends Cmd {
+    def asBin = Seq(RPUSHX, stringConverter.write(key), v)
+  }
+
+  case class Lpushx(key: String, v: Array[Byte]) extends Cmd {
+    def asBin = Seq(LPUSHX, stringConverter.write(key), v)
+  }
+
+  case class Linsert(key: String, direction: DirectionOpts, pivot: Array[Byte], value: Array[Byte]) extends Cmd {
+    def asBin = Seq(LINSERT, stringConverter.write(key), direction.asBin, pivot, value)
   }
 
 }

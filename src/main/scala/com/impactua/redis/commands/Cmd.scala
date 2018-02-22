@@ -111,15 +111,15 @@ private[redis] object Cmd {
   val WAIT = "WAIT".getBytes // TODO
 
   // list
-  val BLPOP = "BLPOP".getBytes
-  val BRPOP = "BRPOP".getBytes
-  val BRPOPLPUSH = "BRPOPLPUSH".getBytes
+  val BLPOP = "BLPOP".getBytes //blocking version of LPOP
+  val BRPOP = "BRPOP".getBytes //blocking version of RPOP
+  val BRPOPLPUSH = "BRPOPLPUSH".getBytes //blocking version of RPOPLPUSH
   val LINDEX = "LINDEX".getBytes
-  val LINSERT = "LINSERT".getBytes //TODO
+  val LINSERT = "LINSERT".getBytes
   val LLEN = "LLEN".getBytes
   val LPOP = "LPOP".getBytes
   val LPUSH = "LPUSH".getBytes
-  val LPUSHX = "LPUSHX".getBytes // TODO
+  val LPUSHX = "LPUSHX".getBytes
   val LRANGE = "LRANGE".getBytes
   val LREM = "LREM".getBytes
   val LSET = "LSET".getBytes
