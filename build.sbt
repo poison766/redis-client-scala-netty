@@ -20,12 +20,14 @@ bintrayOrganization in bintray := Some("sergkh")
 bintrayPackageLabels := Seq("scala", "redis", "netty")
 
 concurrentRestrictions in Global += Tags.limit(Tags.Test, 1)
+javaOptions in Test ++= Seq("-Dio.netty.leakDetection.level=PARANOID")
 
-val nettyVersion = "4.1.20.Final"
+val nettyVersion = "4.1.21.Final"
 
 libraryDependencies ++= Seq(
   "io.netty"           % "netty-handler"                % nettyVersion,
   "io.netty"           % "netty-transport-native-epoll" % nettyVersion classifier "linux-x86_64",
   "org.scalatest"     %% "scalatest"                    % "3.0.4" % Test,
-  "com.storm-enroute" %% "scalameter"                   % "0.8.2" % Test
+  "com.storm-enroute" %% "scalameter"                   % "0.8.2" % Test,
+  "org.slf4j"          % "slf4j-log4j12"                % "1.7.25" % Test
 )

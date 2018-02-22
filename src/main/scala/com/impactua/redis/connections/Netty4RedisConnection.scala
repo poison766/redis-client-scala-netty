@@ -54,7 +54,7 @@ class Netty4RedisConnection(val host: String, val port: Int) extends RedisConnec
   private[Netty4RedisConnection] val (workerGroup, transportProtocol) = selectTransportProtocol
   private[Netty4RedisConnection] val clientBootstrap = createClientBootstrap
   private[Netty4RedisConnection] val opQueue = new ArrayBlockingQueue[ResultFuture](1028)
-  private[Netty4RedisConnection] var clientState = new AtomicReference[ConnectionState](NormalConnectionState(opQueue))
+  private[Netty4RedisConnection] val clientState = new AtomicReference[ConnectionState](NormalConnectionState(opQueue))
 
   private def selectTransportProtocol = {
     val osName = Option(System.getProperties.getProperty("os.name")).map(_.toLowerCase)

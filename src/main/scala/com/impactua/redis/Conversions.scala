@@ -12,7 +12,7 @@ trait BinaryConverter[T] {
   def write(v: T) : Array[Byte]
 }
 
-object BinaryConverter extends DefaultConverters {}
+object BinaryConverter extends DefaultConverters
 
 trait DefaultConverters {
 
