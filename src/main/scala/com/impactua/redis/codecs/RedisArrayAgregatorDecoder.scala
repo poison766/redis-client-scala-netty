@@ -61,7 +61,7 @@ object RedisArrayAgregatorDecoder {
 
   case class AggregateState(length: Int, msgs: ArrayBuffer[RedisMessage]) {
 
-    def isFull: Boolean = length == msgs.size
+    def isFull: Boolean = msgs.lengthCompare(length) == 0
 
     def this(length: Int) = this(length, new ArrayBuffer[RedisMessage](length))
 

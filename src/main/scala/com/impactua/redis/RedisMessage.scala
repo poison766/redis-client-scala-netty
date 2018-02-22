@@ -13,7 +13,9 @@ trait SimpleMessage extends RedisMessage {
   def asOptBin: Option[Array[Byte]] = None
 }
 
-trait ComplexMessage extends RedisMessage
+trait ComplexMessage extends RedisMessage {
+  def asBulk: Seq[BulkDataResult]
+}
 
 case object NullRedisMessage extends SimpleMessage
 
@@ -42,10 +44,8 @@ case class ArrayHeaderRedisMessage(length: Int) extends SimpleMessage {
 }
 
 case class ArrayRedisMessage(children: List[RedisMessage]) extends ComplexMessage {
-
-  //TODO: fixme
   def asBulk: Seq[BulkDataResult] = children.flatMap {
     case s: SimpleMessage => Seq(BulkDataResult(s.asOptBin))
-    case c: ArrayRedisMessage => c.asBulk
+    case c: ComplexMessage => c.asBulk
   }
 } 
