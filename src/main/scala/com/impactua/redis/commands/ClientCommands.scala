@@ -60,24 +60,25 @@ private[commands] object ClientCommands {
 
   def multiBulkDataResultToMap[T](keys: Seq[String], conv: BinaryConverter[T]): PartialFunction[Result, Map[String,T]] = {
     case BulkDataResult(data) => data match {
-      case None => Map()
+      case None => Map.empty[String, T]
       case Some(d) => Map(keys.head -> conv.read(d))
     }
 
     case MultiBulkDataResult(results) =>
-      keys.zip(results).filter {
-        case (k, BulkDataResult(Some(_))) => true
-        case (k, BulkDataResult(None)) => false
-      }.map { kv => kv._1 -> conv.read(kv._2.data.get) }.toMap
+      keys.zip(results).collect {
+        case (key, BulkDataResult(Some(data))) => key -> conv.read(data)
+      }.toMap
   }
 
   def multiBulkDataResultToMap[K, V](implicit keyConv: BinaryConverter[K], valueConv: BinaryConverter[V]): PartialFunction[Result, Map[K,V]] = {
-    case MultiBulkDataResult(List()) => Map()
+    case MultiBulkDataResult(Seq()) => Map.empty[K, V]
     case MultiBulkDataResult(results) =>
       var take = false
+
       results.zip(results.tail).filter { (_) => take = !take; take }.collect {
-        case (BulkDataResult(Some(keyData)), BulkDataResult(Some(data))) => keyData -> data
-      }.map { kv => keyConv.read(kv._1) -> valueConv.read(kv._2)}.toMap
+        case (BulkDataResult(Some(keyData)), BulkDataResult(Some(data))) => keyConv.read(keyData) -> valueConv.read(data)
+      }.toMap
+
     case unknown =>
       throw UnsupportedResponseException("Unsupported response type: " + unknown)
   }
