@@ -51,20 +51,22 @@ private[redis] trait PubSubCommands extends ClientCommands {
 
 object PubSubCommands {
 
+  final val stringConverter = BinaryConverter.StringConverter
+
   case class Publish(channel: String, v: Array[Byte]) extends Cmd {
-    def asBin = Seq(PUBLISH, channel.getBytes(charset), v)
+    def asBin = Seq(PUBLISH, stringConverter.write(channel), v)
   }
 
   case class Subscribe(channels: Seq[String], handler: MultiBulkDataResult => Unit) extends Cmd {
     def asBin =
-      (if (hasPattern) PSUBSCRIBE else SUBSCRIBE) :: channels.toList.map(_.getBytes(charset))
+      (if (hasPattern) PSUBSCRIBE else SUBSCRIBE) :: channels.toList.map(stringConverter.write)
 
     def hasPattern = channels.exists(s => s.contains("*") || s.contains("?"))
   }
 
   case class Unsubscribe(channels: Seq[String]) extends Cmd {
     def asBin =
-      (if (hasPattern) PUNSUBSCRIBE else UNSUBSCRIBE) :: channels.toList.map(_.getBytes(charset))
+      (if (hasPattern) PUNSUBSCRIBE else UNSUBSCRIBE) :: channels.toList.map(stringConverter.write)
 
     def hasPattern = channels.exists(s => s.contains("*") || s.contains("?"))
   }

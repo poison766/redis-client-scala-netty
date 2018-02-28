@@ -29,7 +29,7 @@ private[redis] trait GenericCommands extends ClientCommands {
   def keysAsync(pattern: String): Future[Set[String]] =
     r.send(Keys(pattern)).map(multiBulkDataResultToSet(BinaryConverter.StringConverter))
 
-  def keys(pattern: String) = await(keysAsync(pattern))
+  def keys(pattern: String): Set[String] = await(keysAsync(pattern))
 
   def keytypeAsync(key: String): Future[KeyType] = r.send(Type(key)).map {
     case SingleLineResult(s) => KeyType(s)
@@ -41,7 +41,7 @@ private[redis] trait GenericCommands extends ClientCommands {
   def persistAsync(key: String): Future[Boolean] = r.send(Persist(key)).map(integerResultAsBoolean)
   def persist(key: String): Boolean = await { persistAsync(key) }
 
-  def renameAsync(key: String, newKey: String, notExist: Boolean = true) =
+  def renameAsync(key: String, newKey: String, notExist: Boolean = true): Future[Boolean] =
     r.send(Rename(key, newKey, notExist)).map(integerResultAsBoolean)
 
   def rename(key: String, newKey: String, notExist: Boolean = true) = await {
@@ -84,8 +84,11 @@ private[redis] trait GenericCommands extends ClientCommands {
 
 object GenericCommands {
 
+  final val stringConverter = BinaryConverter.StringConverter
+  final val intConverter = BinaryConverter.IntConverter
+
   case class Del(keys: Seq[String]) extends Cmd {
-    def asBin = DEL :: keys.toList.map(_.getBytes(charset))
+    def asBin = DEL :: keys.toList.map(stringConverter.write)
   }
 
   case class Ping() extends Cmd {
@@ -101,39 +104,39 @@ object GenericCommands {
   }
 
   case class Auth(password: String) extends Cmd {
-    def asBin = Seq(AUTH, password.getBytes(charset))
+    def asBin = Seq(AUTH, stringConverter.write(password))
   }
 
   case class Select(db: Int) extends Cmd {
-    def asBin = Seq(SELECT, db.toString.getBytes(charset))
+    def asBin = Seq(SELECT, intConverter.write(db))
   }
 
   case class Expire(key: String, seconds: Int) extends Cmd {
-    def asBin = Seq(EXPIRE, key.getBytes(charset), seconds.toString.getBytes(charset))
+    def asBin = Seq(EXPIRE, stringConverter.write(key), intConverter.write(seconds))
   }
 
   case class Persist(key: String) extends Cmd {
-    def asBin = Seq(PERSIST, key.getBytes(charset))
+    def asBin = Seq(PERSIST, stringConverter.write(key))
   }
 
   case class Ttl(key: String) extends Cmd {
-    def asBin = Seq(TTL, key.getBytes(charset))
+    def asBin = Seq(TTL, stringConverter.write(key))
   }
 
   case class Keys(pattern: String) extends Cmd {
-    def asBin = Seq(KEYS, pattern.getBytes(charset))
+    def asBin = Seq(KEYS, stringConverter.write(pattern))
   }
 
   case class Exists(key: String) extends Cmd {
-    def asBin = Seq(EXISTS, key.getBytes(charset))
+    def asBin = Seq(EXISTS, stringConverter.write(key))
   }
 
   case class Type(key: String) extends Cmd {
-    def asBin = Seq(TYPE, key.getBytes(charset))
+    def asBin = Seq(TYPE, stringConverter.write(key))
   }
 
   case class Rename(key: String, newKey: String, nx: Boolean) extends Cmd {
-    def asBin = Seq(if (nx) RENAMENX else RENAME, key.getBytes(charset), newKey.getBytes(charset))
+    def asBin = Seq(if (nx) RENAMENX else RENAME, stringConverter.write(key), stringConverter.write(newKey))
   }
 
 }

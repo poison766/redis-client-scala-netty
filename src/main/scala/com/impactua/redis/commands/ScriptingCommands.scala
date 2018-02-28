@@ -53,16 +53,19 @@ private[redis] trait ScriptingCommands extends ClientCommands {
 
 object ScriptingCommands {
 
+  final val stringConverter = BinaryConverter.StringConverter
+  final val intConverter = BinaryConverter.IntConverter
+
   case class Eval(script: String, kv: Seq[(String, Array[Byte])]) extends Cmd {
-    def asBin = EVAL :: script.getBytes(charset) :: kv.length.toString.getBytes :: kv.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+    def asBin = EVAL :: stringConverter.write(script) :: kv.length.toString.getBytes :: kv.toList.flatMap { kv => List(stringConverter.write(kv._1), kv._2) }
   }
 
   case class EvalSha(digest: String, kv: Seq[(String, Array[Byte])]) extends Cmd {
-    def asBin = EVALSHA :: digest.getBytes(charset) :: kv.length.toString.getBytes :: kv.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+    def asBin = EVALSHA :: stringConverter.write(digest) :: intConverter.write(kv.length) :: kv.toList.flatMap { kv => List(stringConverter.write(kv._1), kv._2) }
   }
 
   case class ScriptLoad(script: String) extends Cmd {
-    def asBin = SCRIPT_LOAD :+ script.getBytes(charset)
+    def asBin = SCRIPT_LOAD :+ stringConverter.write(script)
   }
 
   case class ScriptKill() extends Cmd {
@@ -74,7 +77,7 @@ object ScriptingCommands {
   }
 
   case class ScriptExists(script: String) extends Cmd {
-    def asBin = SCRIPT_EXISTS :+ script.getBytes(charset)
+    def asBin = SCRIPT_EXISTS :+ stringConverter.write(script)
   }
 
 }

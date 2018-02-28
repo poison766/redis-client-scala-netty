@@ -85,12 +85,16 @@ private[redis] trait StringCommands extends ClientCommands {
 }
 
 object StringCommands {
+
+  final val stringConverter = BinaryConverter.StringConverter
+  final val intConverter = BinaryConverter.IntConverter
+
   case class Get(key: String) extends Cmd {
-    def asBin = Seq(GET, key.getBytes(charset))
+    def asBin = Seq(GET, stringConverter.write(key))
   }
 
   case class MGet(keys: Seq[String]) extends Cmd {
-    def asBin = MGET :: keys.toList.map(_.getBytes(charset))
+    def asBin = MGET :: keys.toList.map(stringConverter.write)
   }
 
   case class SetCmd(key: String,
@@ -100,8 +104,8 @@ object StringCommands {
                     xx: Boolean = false) extends Cmd {
 
     def asBin = {
-      var seq = Seq(SET, key.getBytes(charset), v)
-      if (expTime != -1) seq = seq ++ Seq(EX, expTime.toString.getBytes)
+      var seq = Seq(SET, stringConverter.write(key), v)
+      if (expTime != -1) seq = seq ++ Seq(EX, intConverter.write(expTime))
 
       if (nx) {
         seq = seq :+ NX
@@ -114,32 +118,32 @@ object StringCommands {
   }
 
   case class MSet(kvs: Seq[(String, Array[Byte])]) extends Cmd {
-    def asBin = MSET :: kvs.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+    def asBin = MSET :: kvs.toList.flatMap { kv => List(stringConverter.write( kv._1), kv._2) }
   }
 
   case class SetNx(kvs: Seq[(String, Array[Byte])]) extends Cmd {
-    def asBin = MSETNX :: kvs.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+    def asBin = MSETNX :: kvs.toList.flatMap { kv => List(stringConverter.write( kv._1), kv._2) }
   }
 
   case class GetSet(key: String, v: Array[Byte]) extends Cmd {
-    def asBin = Seq(GETSET, key.getBytes(charset), v)
+    def asBin = Seq(GETSET, stringConverter.write(key), v)
   }
 
   case class Incr(key: String, delta: Int = 1) extends Cmd {
-    def asBin = if(delta == 1) Seq(INCR, key.getBytes(charset))
-    else Seq(INCRBY, key.getBytes(charset), delta.toString.getBytes)
+    def asBin = if(delta == 1) Seq(INCR, stringConverter.write(key))
+    else Seq(INCRBY, stringConverter.write(key), intConverter.write(delta))
   }
 
   case class Decr(key: String, delta: Int = 1) extends Cmd {
-    def asBin = if(delta == 1) Seq(DECR, key.getBytes(charset))
-    else Seq(DECRBY, key.getBytes(charset), delta.toString.getBytes)
+    def asBin = if(delta == 1) Seq(DECR, stringConverter.write(key))
+    else Seq(DECRBY, stringConverter.write(key), intConverter.write(delta))
   }
 
   case class Append(key: String, v: Array[Byte]) extends Cmd {
-    def asBin = Seq(APPEND, key.getBytes(charset), v)
+    def asBin = Seq(APPEND, stringConverter.write(key), v)
   }
 
   case class Getrange(key: String, startOffset: Int, endOffset: Int) extends Cmd {
-    def asBin = Seq(GETRANGE, key.getBytes(charset), startOffset.toString.getBytes, endOffset.toString.getBytes)
+    def asBin = Seq(GETRANGE, stringConverter.write(key), intConverter.write(startOffset), intConverter.write(endOffset))
   }
 }

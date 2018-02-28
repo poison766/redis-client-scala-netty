@@ -44,24 +44,26 @@ private[redis] trait GeoCommands extends ClientCommands {
 
 object GeoCommands {
 
+  val stringConverter = BinaryConverter.StringConverter
+
   case class GeoAdd(key: String, values: Seq[(Array[Byte], Array[Byte], Array[Byte])]) extends Cmd {
     def asBin = Seq(GEOADD) ++ values.flatMap(a => Seq(a._1, a._2, a._3))
   }
 
   case class GeoDist(key: String, member1: String, member2: String, unit: String) extends Cmd {
     def asBin = if ("m".equals(unit)) {
-      List(GEODIST, member1.getBytes(charset), member2.getBytes(charset))
+      List(GEODIST, stringConverter.write(member1), stringConverter.write(member2))
     } else {
-      List(GEODIST, member1.getBytes(charset), member2.getBytes(charset), unit.getBytes(charset))
+      List(GEODIST, stringConverter.write(member1), stringConverter.write(member2), stringConverter.write(unit))
     }
   }
 
   case class GeoHash(key: String, members: Seq[String]) extends Cmd {
-    def asBin = GEOHASH :: key.getBytes(charset) :: members.map(_.getBytes(charset)).toList
+    def asBin = GEOHASH :: stringConverter.write(key) :: members.map(stringConverter.write).toList
   }
 
   case class GeoPos(key: String, members: Seq[String]) extends Cmd {
-    def asBin = GEOPOS :: key.getBytes(charset) :: members.map(_.getBytes(charset)).toList
+    def asBin = GEOPOS :: stringConverter.write(key) :: members.map(stringConverter.write).toList
   }
 
   // TODO: case class GeoRadius extends Cmd { def asBin = GAORADIUS :: Nil }

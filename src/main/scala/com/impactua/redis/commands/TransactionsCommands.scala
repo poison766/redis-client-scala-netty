@@ -33,6 +33,8 @@ private[redis] trait TransactionsCommands extends ClientCommands {
 
 object TransactionsCommands {
 
+  final val stringConverter = BinaryConverter.StringConverter
+
   case class Multi() extends Cmd {
     def asBin = Seq(MULTI)
   }
@@ -46,7 +48,7 @@ object TransactionsCommands {
   }
 
   case class Watch(keys: Seq[String]) extends Cmd {
-    def asBin = WATCH :: keys.map(_.getBytes(charset)).toList
+    def asBin = WATCH :: keys.map(stringConverter.write).toList
   }
 
   case class Unwatch() extends Cmd {

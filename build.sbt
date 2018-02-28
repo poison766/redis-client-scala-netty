@@ -16,13 +16,13 @@ publishArtifact in Test := false
 
 bintrayReleaseOnPublish := false
 bintrayPackage := name.value
-bintrayOrganization in bintray := Some("sergkh")
+bintrayOrganization in bintray := Some("yarosman")
 bintrayPackageLabels := Seq("scala", "redis", "netty")
 
 concurrentRestrictions in Global += Tags.limit(Tags.Test, 1)
 javaOptions in Test ++= Seq("-Dio.netty.leakDetection.level=PARANOID")
 
-val nettyVersion = "4.1.21.Final"
+val nettyVersion = "4.1.22.Final"
 
 libraryDependencies ++= Seq(
   "io.netty"           % "netty-handler"                % nettyVersion,
