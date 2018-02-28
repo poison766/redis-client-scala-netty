@@ -111,4 +111,5 @@ class SetCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.sadd("key-srandmember", 6, 7, 8, 9) shouldEqual 4
     client.srandmember[Int]("key-srandmember") should contain oneOf(6, 7, 8, 9)
   }
+
 }

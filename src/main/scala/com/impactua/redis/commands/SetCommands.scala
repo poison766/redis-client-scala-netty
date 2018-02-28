@@ -4,6 +4,7 @@ import com.impactua.redis.BinaryConverter
 import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.commands.Cmd._
 import com.impactua.redis.commands.SetCommands._
+import com.impactua.redis.utils.ScanResult
 
 import scala.collection.Set
 import scala.concurrent.Future
@@ -83,11 +84,19 @@ private[redis] trait SetCommands extends ClientCommands {
 
   def srandmember[T](key: String)(implicit conv: BinaryConverter[T]): Option[T] = await { srandmemberAsync(key)(conv) }
 
+  //TODO: maybe it better to use linked hash set
+  def sscanAsync(cursor: Int, count: Int = 10, pattern: Option[String] = None): Future[ScanResult] = {
+    r.send(Scan(cursor, count, pattern)).map(multiBulkResultToScanResult)
+  }
+
+  def sscan(cursor: Int, count: Int = 10, pattern: Option[String] = None): ScanResult = await(sscanAsync(cursor, count, pattern))
+
 }
 
 object SetCommands {
 
   final val stringConverter = BinaryConverter.StringConverter
+  final val intConverter = BinaryConverter.IntConverter
 
   case class Sadd(key: String, values: Seq[Array[Byte]]) extends Cmd {
     def asBin = Seq(SADD, stringConverter.write(key)) ++ values
@@ -143,6 +152,10 @@ object SetCommands {
 
   case class Srandmember(key: String) extends Cmd {
     def asBin = Seq(SRANDMEMBER, stringConverter.write(key))
+  }
+
+  case class Scan(cursor: Int, count: Int, pattern: Option[String]) extends Cmd {
+    override def asBin: Seq[Array[Byte]] = Seq(SSCAN, intConverter.write(count)) :+ pattern.map(stringConverter.write).getOrElse(Array.emptyByteArray)
   }
 
 }

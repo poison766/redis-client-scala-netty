@@ -2,6 +2,8 @@ package com.impactua.redis.commands
 
 import com.impactua.redis._
 import com.impactua.redis.connections._
+import com.impactua.redis.utils.ScanResult
+import scala.collection.immutable.{Set => ISet}
 
 import scala.collection.{Set, mutable}
 import scala.concurrent.{ExecutionContext, Future}
@@ -88,6 +90,19 @@ private[commands] object ClientCommands {
     case BulkDataResult(Some(v)) => Set(conv.read(v))
   }
 
+  def multiBulkResultToScanResult: PartialFunction[Result, ScanResult] = {
+    case MultiBulkDataResult(BulkDataResult(Some(data)) :: Nil) =>
+      ScanResult(BinaryConverter.IntConverter.read(data), ISet.empty[String])
+
+    case MultiBulkDataResult(BulkDataResult(Some(data)) :: keys) =>
+      val scanKeys = keys.collect {
+        case BulkDataResult(Some(bytes)) => BinaryConverter.StringConverter.read(bytes)
+      }
+      ScanResult(BinaryConverter.IntConverter.read(data), scanKeys.toSet)
+
+    case x =>
+      throw new IllegalStateException("Invalid response got from server: " + x)
+  }
 
   private[this] def filterEmptyAndMap[T](r: Seq[BulkDataResult], conv: BinaryConverter[T]) = r.collect {
     case BulkDataResult(Some(data)) => conv.read(data)
