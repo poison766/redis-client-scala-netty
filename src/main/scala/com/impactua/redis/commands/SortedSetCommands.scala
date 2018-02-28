@@ -202,21 +202,27 @@ private[redis] trait SortedSetCommands extends ClientCommands {
 }
 
 object SortedSetCommands {
+
+  final val stringConverter = BinaryConverter.StringConverter
+  final val floatConverter = BinaryConverter.FloatConverter
+  final val intConverter = BinaryConverter.IntConverter
+  final val doubleConverter = BinaryConverter.DoubleConverter
+
   //sorted set
   case class Zadd(key: String, values: Seq[(Float, Array[Byte])], opts: ZaddOptions = ZaddOptions()) extends Cmd {
-    def asBin = Seq(ZADD, key.getBytes(charset)) ++ opts.asBin ++ values.flatMap(kv => List(kv._1.toString.getBytes, kv._2))
+    def asBin = Seq(ZADD, stringConverter.write(key)) ++ opts.asBin ++ values.flatMap(kv => List(kv._1.toString.getBytes, kv._2))
   }
 
   case class Zcard(key: String) extends Cmd {
-    def asBin = Seq(ZCARD, key.getBytes(charset))
+    def asBin = Seq(ZCARD, stringConverter.write(key))
   }
 
   case class Zcount(key: String, min: Float, max: Float) extends Cmd {
-    def asBin = Seq(ZCOUNT, key.getBytes(charset), min.toString.getBytes(charset), max.toString.getBytes(charset))
+    def asBin = Seq(ZCOUNT, stringConverter.write(key), floatConverter.write(min), floatConverter.write(max))
   }
 
   case class Zincrby(key: String, increment: Float, member: Array[Byte]) extends Cmd {
-    def asBin = Seq(ZINCRBY, key.getBytes(charset), increment.toString.getBytes(charset), member)
+    def asBin = Seq(ZINCRBY, stringConverter.write(key), floatConverter.write(increment), member)
   }
 
   case class ZINTERSTORE(key: String) extends Cmd {
@@ -224,20 +230,20 @@ object SortedSetCommands {
   }
 
   case class Zlexcount(key: String, min: Array[Byte], max: Array[Byte]) extends Cmd {
-    def asBin = Seq(ZLEXCOUNT, key.getBytes(charset), min, max)
+    def asBin = Seq(ZLEXCOUNT, stringConverter.write(key), min, max)
   }
 
   case class Zrange(key: String, start: Int, stop: Int, withScores: Boolean) extends Cmd {
     def asBin = {
       val _withScores = if (withScores) Seq(WITHSCORES) else Nil
-      Seq(ZRANGE, key.getBytes(charset), start.toString.getBytes(charset), stop.toString.getBytes(charset)) ++ _withScores
+      Seq(ZRANGE, stringConverter.write(key), intConverter.write(start), intConverter.write(stop)) ++ _withScores
     }
   }
 
   case class ZrangeByLex(key: String, min: String, max: String, limit: Option[Limit]) extends Cmd {
     def asBin = {
       val withlimits = limit.map(_.asBin).getOrElse(Nil)
-      Seq(ZRANGEBYLEX, key.getBytes(charset), min.toString.getBytes(charset), max.toString.getBytes(charset)) ++ withlimits
+      Seq(ZRANGEBYLEX, stringConverter.write(key), stringConverter.write(min), stringConverter.write(max)) ++ withlimits
     }
   }
 
@@ -245,50 +251,50 @@ object SortedSetCommands {
     def asBin = {
       val _withScores = if (withScores) Seq(WITHSCORES) else Nil
       val withlimits = limit.map(_.asBin).getOrElse(Nil)
-      Seq(ZRANGEBYSCORE, key.getBytes(charset), min.getBytes(charset), max.getBytes(charset)) ++ _withScores ++ withlimits
+      Seq(ZRANGEBYSCORE, stringConverter.write(key), min.getBytes(charset), max.getBytes(charset)) ++ _withScores ++ withlimits
     }
   }
 
   case class Zrank(key: String, member: Array[Byte]) extends Cmd {
     def asBin = {
-      Seq(ZRANK, key.getBytes(charset), member)
+      Seq(ZRANK, stringConverter.write(key), member)
     }
   }
 
   case class Zrem(key: String, members: Seq[Array[Byte]]) extends Cmd {
     def asBin = {
-      Seq(ZREM, key.getBytes(charset)) ++ members
+      Seq(ZREM, stringConverter.write(key)) ++ members
     }
   }
 
   case class ZremRangeByLex(key: String, min: String, max: String) extends Cmd {
     def asBin = {
-      Seq(ZREMRANGEBYLEX, key.getBytes(charset), min.getBytes(charset), max.getBytes(charset))
+      Seq(ZREMRANGEBYLEX, stringConverter.write(key), stringConverter.write(min), stringConverter.write(max))
     }
   }
 
   case class ZremRangeByRank(key: String, startRange: Int, stopRange: Int) extends Cmd {
     def asBin = {
-      Seq(ZREMRANGEBYRANK, key.getBytes(charset), startRange.toString.getBytes(charset), stopRange.toString.getBytes(charset))
+      Seq(ZREMRANGEBYRANK, stringConverter.write(key), intConverter.write(startRange), intConverter.write(stopRange))
     }
   }
 
   case class ZremRangeByScore(key: String, minScore: String, maxScore: String) extends Cmd {
     def asBin = {
-      Seq(ZREMRANGEBYSCORE, key.getBytes(charset), minScore.toString.getBytes(charset), maxScore.toString.getBytes(charset))
+      Seq(ZREMRANGEBYSCORE, stringConverter.write(key), stringConverter.write(minScore), stringConverter.write(maxScore))
     }
   }
 
   case class ZrevRange(key: String, start: Int, stop: Int) extends Cmd {
     def asBin = {
-      Seq(ZREVRANGE, key.getBytes(charset), start.toString.getBytes(charset), stop.toString.getBytes(charset))
+      Seq(ZREVRANGE, stringConverter.write(key), intConverter.write(start), intConverter.write(stop))
     }
   }
 
   case class ZrevRangeByLex(key: String, min: String, max: String, limit: Option[Limit]) extends Cmd {
     def asBin = {
       val withlimits = limit.map(_.asBin).getOrElse(Nil)
-      Seq(ZREVRANGEBYLEX, key.getBytes(charset), min.toString.getBytes(charset), max.toString.getBytes(charset)) ++ withlimits
+      Seq(ZREVRANGEBYLEX, stringConverter.write(key), stringConverter.write(min), stringConverter.write(max)) ++ withlimits
     }
   }
 
@@ -296,27 +302,27 @@ object SortedSetCommands {
     def asBin = {
       val withlimits = limit.map(_.asBin).getOrElse(Nil)
       val _withScores = if (withScores) Seq(WITHSCORES) else Nil
-      Seq(ZREVRANGEBYSCORE, key.getBytes(charset), min.toString.getBytes(charset), max.toString.getBytes(charset)) ++ _withScores ++ withlimits
+      Seq(ZREVRANGEBYSCORE, stringConverter.write(key), stringConverter.write(min), stringConverter.write(max)) ++ _withScores ++ withlimits
     }
   }
 
   case class Zrevrank(key: String, member: Array[Byte]) extends Cmd {
     def asBin = {
-      Seq(ZREVRANK, key.getBytes(charset), member)
+      Seq(ZREVRANK, stringConverter.write(key), member)
     }
   }
 
   case class Zscore(key: String, member: Array[Byte]) extends Cmd {
     def asBin = {
-      Seq(ZSCORE, key.getBytes(charset), member)
+      Seq(ZSCORE, stringConverter.write(key), member)
     }
   }
 
   case class Zunionstore(dstZsetName: String, zsetNumber: Int, srcZets: Seq[String], weights: Seq[Double], agregationFunc: Agregation = SumAgregation) extends Cmd {
     def asBin = {
-      val _weights: Seq[Array[Byte]] = if (weights.isEmpty) Nil else Seq("WEIGHTS".getBytes(charset)) ++ weights.map(_.toString.getBytes(charset))
+      val _weights: Seq[Array[Byte]] = if (weights.isEmpty) Nil else Seq("WEIGHTS".getBytes(charset)) ++ weights.map(doubleConverter.write)
 
-      Seq(ZUNIONSTORE, dstZsetName.getBytes(charset), zsetNumber.toString.getBytes(charset)) ++ srcZets.map(_.getBytes(charset)) ++
+      Seq(ZUNIONSTORE, stringConverter.write(dstZsetName), intConverter.write(zsetNumber)) ++ srcZets.map(stringConverter.write) ++
         _weights ++ Seq("AGGREGATE".getBytes(charset), agregationFunc.asBin)
     }
   }

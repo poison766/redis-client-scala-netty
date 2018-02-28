@@ -87,60 +87,62 @@ private[redis] trait SetCommands extends ClientCommands {
 
 object SetCommands {
 
+  final val stringConverter = BinaryConverter.StringConverter
+
   case class Sadd(key: String, values: Seq[Array[Byte]]) extends Cmd {
-    def asBin = Seq(SADD, key.getBytes(charset)) ++ values
+    def asBin = Seq(SADD, stringConverter.write(key)) ++ values
   }
 
   case class Srem(key: String, v: Array[Byte]) extends Cmd {
-    def asBin = Seq(SREM, key.getBytes(charset), v)
+    def asBin = Seq(SREM, stringConverter.write(key), v)
   }
 
   case class Spop(key: String) extends Cmd {
-    def asBin = Seq(SPOP, key.getBytes(charset))
+    def asBin = Seq(SPOP, stringConverter.write(key))
   }
 
   case class Smove(srcKey: String, destKey: String, value: Array[Byte]) extends Cmd {
-    def asBin = Seq(SMOVE, srcKey.getBytes(charset), destKey.getBytes(charset), value)
+    def asBin = Seq(SMOVE, stringConverter.write(srcKey), stringConverter.write(destKey), value)
   }
 
   case class Scard(key: String) extends Cmd {
-    def asBin = Seq(SCARD, key.getBytes(charset))
+    def asBin = Seq(SCARD, stringConverter.write(key))
   }
 
   case class Sismember(key: String, v: Array[Byte]) extends Cmd {
-    def asBin = Seq(SISMEMBER, key.getBytes(charset), v)
+    def asBin = Seq(SISMEMBER, stringConverter.write(key), v)
   }
 
   case class Sinter(keys: Seq[String]) extends Cmd {
-    def asBin = SINTER :: keys.toList.map(_.getBytes(charset))
+    def asBin = SINTER :: keys.toList.map(stringConverter.write)
   }
 
   case class Sinterstore(destKey: String, keys: Seq[String]) extends Cmd {
-    def asBin = SINTERSTORE :: destKey.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
+    def asBin = SINTERSTORE :: stringConverter.write(destKey) :: keys.toList.map(stringConverter.write)
   }
 
   case class Sunion(keys: Seq[String]) extends Cmd {
-    def asBin = SUNION :: keys.toList.map(_.getBytes(charset))
+    def asBin = SUNION :: keys.toList.map(stringConverter.write)
   }
 
   case class Sunionstore(destKey: String, keys: Seq[String]) extends Cmd {
-    def asBin = SUNIONSTORE :: destKey.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
+    def asBin = SUNIONSTORE :: stringConverter.write(destKey) :: keys.toList.map(stringConverter.write)
   }
 
   case class Sdiff(keys: Seq[String]) extends Cmd {
-    def asBin = SDIFF :: keys.toList.map(_.getBytes(charset))
+    def asBin = SDIFF :: keys.toList.map(stringConverter.write)
   }
 
   case class Sdiffstore(destKey: String, keys: Seq[String]) extends Cmd {
-    def asBin = SDIFFSTORE :: destKey.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
+    def asBin = SDIFFSTORE :: stringConverter.write(destKey) :: keys.toList.map(stringConverter.write)
   }
 
   case class Smembers(key: String) extends Cmd {
-    def asBin = Seq(SMEMBERS, key.getBytes(charset))
+    def asBin = Seq(SMEMBERS, stringConverter.write(key))
   }
 
   case class Srandmember(key: String) extends Cmd {
-    def asBin = Seq(SRANDMEMBER, key.getBytes(charset))
+    def asBin = Seq(SRANDMEMBER, stringConverter.write(key))
   }
 
 }

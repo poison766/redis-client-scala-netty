@@ -29,15 +29,17 @@ private[redis] trait HyperLogLogCommands extends ClientCommands {
 
 object HyperLogLogCommands {
 
+  final val stringConverter = BinaryConverter.StringConverter
+
   case class PfAdd(key: String, values: Seq[Array[Byte]]) extends Cmd {
-    def asBin = PFADD :: key.getBytes(charset) :: values.toList
+    def asBin = PFADD :: stringConverter.write(key) :: values.toList
   }
 
   case class PfCount(key: String) extends Cmd {
-    def asBin = Seq(PFCOUNT, key.getBytes(charset))
+    def asBin = Seq(PFCOUNT, stringConverter.write(key))
   }
 
   case class PfMerge(dst: String, keys: Seq[String]) extends Cmd {
-    def asBin = PFMERGE :: dst.getBytes(charset) :: keys.toList.map(_.getBytes(charset))
+    def asBin = PFMERGE :: stringConverter.write(dst) :: keys.toList.map(stringConverter.write)
   }
 }

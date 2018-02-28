@@ -79,61 +79,63 @@ private[redis] trait HashCommands extends ClientCommands {
 
 object HashCommands {
 
+  final val stringConverter = BinaryConverter.StringConverter
+  final val intConverter = BinaryConverter.IntConverter
+  final val doubleConverter = BinaryConverter.DoubleConverter
+
   case class Hset(key: String, field: String, value: Array[Byte]) extends Cmd {
-    def asBin = Seq(HSET, key.getBytes(charset), field.getBytes(charset), value)
+    def asBin = Seq(HSET, stringConverter.write(key), stringConverter.write(field), value)
   }
 
   case class Hget(key: String, field: String) extends Cmd {
-    def asBin = Seq(HGET, key.getBytes(charset), field.getBytes(charset))
+    def asBin = Seq(HGET, stringConverter.write(key), stringConverter.write(field))
   }
 
   case class Hmget(key: String, fields: Seq[String]) extends Cmd {
-    def asBin = HMGET :: key.getBytes(charset) :: fields.toList.map {
-      _.getBytes(charset)
-    }
+    def asBin = HMGET :: stringConverter.write(key) :: fields.toList.map(stringConverter.write)
   }
 
   case class Hmset(key: String, kvs: Seq[(String, Array[Byte])]) extends Cmd {
-    def asBin = HMSET :: key.getBytes :: kvs.toList.flatMap { kv => List(kv._1.getBytes(charset), kv._2) }
+    def asBin = HMSET :: stringConverter.write(key) :: kvs.toList.flatMap { kv => List(stringConverter.write(kv._1), kv._2) }
   }
 
   case class Hincrby(key: String, field: String, delta: Int) extends Cmd {
-    def asBin = Seq(HINCRBY, key.getBytes(charset), field.getBytes(charset), delta.toString.getBytes)
+    def asBin = Seq(HINCRBY, stringConverter.write(key), stringConverter.write(field), intConverter.write(delta))
   }
 
   case class Hexists(key: String, field: String) extends Cmd {
-    def asBin = Seq(HEXISTS, key.getBytes(charset), field.getBytes(charset))
+    def asBin = Seq(HEXISTS, stringConverter.write(key), stringConverter.write(field))
   }
 
   case class Hdel(key: String, field: String) extends Cmd {
-    def asBin = Seq(HDEL, key.getBytes(charset), field.getBytes(charset))
+    def asBin = Seq(HDEL, stringConverter.write(key), stringConverter.write(field))
   }
 
   case class Hlen(key: String) extends Cmd {
-    def asBin = Seq(HLEN, key.getBytes(charset))
+    def asBin = Seq(HLEN, stringConverter.write(key))
   }
 
   case class Hkeys(key: String) extends Cmd {
-    def asBin = Seq(HKEYS, key.getBytes(charset))
+    def asBin = Seq(HKEYS, stringConverter.write(key))
   }
 
   case class Hvals(key: String) extends Cmd {
-    def asBin = Seq(HVALS, key.getBytes(charset))
+    def asBin = Seq(HVALS, stringConverter.write(key))
   }
 
   case class Hgetall(key: String) extends Cmd {
-    def asBin = Seq(HGETALL, key.getBytes(charset))
+    def asBin = Seq(HGETALL, stringConverter.write(key))
   }
 
   case class Hstrlen(key: String, field: String) extends Cmd {
-    def asBin = Seq(HSTRLEN, key.getBytes, field.getBytes)
+    def asBin = Seq(HSTRLEN, stringConverter.write(key), stringConverter.write(field))
   }
 
   case class Hsetnx(key: String, field: String, value: Array[Byte], nx: Boolean = false) extends Cmd {
-    def asBin = Seq(if (nx) HSET else HSETNX, key.getBytes(charset), field.getBytes(charset), value)
+    def asBin = Seq(if (nx) HSET else HSETNX, stringConverter.write(key), stringConverter.write(field), value)
   }
 
   case class Hincrbyfloat(key: String, field: String, delta: Double) extends Cmd {
-    def asBin = Seq(HINCRBYFLOAT, key.getBytes(charset), field.getBytes(charset), delta.toString.getBytes)
+    def asBin = Seq(HINCRBYFLOAT, stringConverter.write(key), stringConverter.write(field), doubleConverter.write(delta))
   }
 }
