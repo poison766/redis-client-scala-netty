@@ -4,6 +4,8 @@ import com.impactua.redis.BinaryConverter
 import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.commands.Cmd._
 import com.impactua.redis.commands.HashCommands._
+import com.impactua.redis.commands.SetCommands.SScan
+import com.impactua.redis.utils.ScanResult
 
 import scala.concurrent.Future
 
@@ -75,6 +77,12 @@ private[redis] trait HashCommands extends ClientCommands {
 
   def hincrbyfloat[T](key: String, field: String, delta: Double = 1.0)(implicit conv: BinaryConverter[T]): Double = await { hincrbyfloatAsync(key, field, delta)}
 
+  def hscanAsync[K, V](key: String, cursor: Int = 0, count: Int = 10, pattern: Option[String] = None)(implicit kconv: BinaryConverter[K], vconv: BinaryConverter[V]) = {
+    r.send(HScan(key, cursor, count, pattern)).map(multiBulkResultToHScanResult[K,V])
+  }
+
+  def hscan[K, V](key: String, cursor: Int = 0, count: Int = 10, pattern: Option[String] = None)(implicit kconv: BinaryConverter[K], vconv: BinaryConverter[V]) = await(hscanAsync[K, V](key, cursor, count, pattern))
+
 }
 
 object HashCommands {
@@ -138,4 +146,12 @@ object HashCommands {
   case class Hincrbyfloat(key: String, field: String, delta: Double) extends Cmd {
     def asBin = Seq(HINCRBYFLOAT, stringConverter.write(key), stringConverter.write(field), doubleConverter.write(delta))
   }
+
+  case class HScan(key: String, cursor: Int, count: Int, pattern: Option[String]) extends Cmd {
+    override def asBin: Seq[Array[Byte]] = {
+      val scanMatch = pattern.map(pattern => Seq(MATCH, stringConverter.write(pattern))).getOrElse(Seq.empty[Array[Byte]])
+      Seq(HSCAN,  stringConverter.write(key), intConverter.write(cursor)) ++ scanMatch ++ Seq(COUNT, intConverter.write(count))
+    }
+  }
+
 }

@@ -85,11 +85,11 @@ private[redis] trait SetCommands extends ClientCommands {
   def srandmember[T](key: String)(implicit conv: BinaryConverter[T]): Option[T] = await { srandmemberAsync(key)(conv) }
 
   //TODO: maybe it better to use linked hash set
-  def sscanAsync(cursor: Int, count: Int = 10, pattern: Option[String] = None): Future[ScanResult] = {
-    r.send(Scan(cursor, count, pattern)).map(multiBulkResultToScanResult)
+  def sscanAsync(key: String, cursor: Int, count: Int = 10, pattern: Option[String] = None): Future[ScanResult] = {
+    r.send(SScan(key, cursor, count, pattern)).map(multiBulkResultToScanResult)
   }
 
-  def sscan(cursor: Int, count: Int = 10, pattern: Option[String] = None): ScanResult = await(sscanAsync(cursor, count, pattern))
+  def sscan(key: String, cursor: Int, count: Int = 10, pattern: Option[String] = None): ScanResult = await(sscanAsync(key, cursor, count, pattern))
 
 }
 
@@ -154,8 +154,11 @@ object SetCommands {
     def asBin = Seq(SRANDMEMBER, stringConverter.write(key))
   }
 
-  case class Scan(cursor: Int, count: Int, pattern: Option[String]) extends Cmd {
-    override def asBin: Seq[Array[Byte]] = Seq(SSCAN, intConverter.write(count)) :+ pattern.map(stringConverter.write).getOrElse(Array.emptyByteArray)
+  case class SScan(key: String, cursor: Int, count: Int, pattern: Option[String]) extends Cmd {
+    override def asBin: Seq[Array[Byte]] = {
+      val scanMatch = pattern.map(pattern => Seq(MATCH, stringConverter.write(pattern))).getOrElse(Seq.empty[Array[Byte]])
+      Seq(SSCAN,  stringConverter.write(key), intConverter.write(cursor)) ++ scanMatch ++ Seq(COUNT, intConverter.write(count))
+    }
   }
 
 }

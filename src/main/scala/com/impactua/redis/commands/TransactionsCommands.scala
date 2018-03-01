@@ -5,6 +5,8 @@ import com.impactua.redis.commands.Cmd._
 import com.impactua.redis.commands.TransactionsCommands._
 import com.impactua.redis.{BinaryConverter, RedisClient}
 
+import scala.concurrent.Future
+
 /**
   * http://redis.io/commands#transactions
   */
@@ -17,7 +19,7 @@ private[redis] trait TransactionsCommands extends ClientCommands {
   def watchAsync(keys: String*) = r.send(Watch(keys))
   def unwatchAsync() = r.send(Unwatch())
 
-  def withTransaction(block: RedisClient => Unit) = {
+  def withTransactionAsync(block: RedisClient => Unit): Future[collection.Set[String]] = {
     multiAsync()
     try {
       block(self)
@@ -28,6 +30,8 @@ private[redis] trait TransactionsCommands extends ClientCommands {
         throw e
     }
   }
+
+  def withTransaction(block: RedisClient => Unit) = await(withTransactionAsync(block))
 
 }
 

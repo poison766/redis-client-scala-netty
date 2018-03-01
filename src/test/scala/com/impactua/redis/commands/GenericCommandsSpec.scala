@@ -3,6 +3,7 @@ package com.impactua.redis.commands
 import com.impactua.redis.TestClient
 import org.scalatest.{FlatSpec, Matchers}
 import com.impactua.redis.primitives.Redlock._
+import com.impactua.redis.utils.ScanResult
 
 class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
 
@@ -27,6 +28,7 @@ class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.persist("foo") shouldBe true
     client.ttl("foo") shouldEqual -1
     client.ttl("somekey") shouldEqual -2
+    client.del("foo") shouldEqual 1
   }
 
   "Keys" should "return all matched keys" in {
@@ -40,6 +42,7 @@ class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.withTransaction { cli =>
       cli.setAsync("tx_key", "tx_val")
     }
+    client.del("tx_key")
   }
 
   "Scripting" should "accept and execute scripts" in {
@@ -56,6 +59,11 @@ class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.scriptFlush() shouldBe true
 
     client.scriptExists("4629ab89363d08ca29abd4bb0aaf5ed70e2bb228") shouldBe false
+  }
+
+  "A scan" should " iterates the set of keys in the currently selected Redis database" in {
+    client.set("scan:1" -> 1, "scan:2" -> 2) shouldBe true
+    client.scan(0, 10, None) shouldEqual ScanResult(0, Set("scan:1", "scan:2"))
   }
 
   /*
@@ -159,8 +167,13 @@ class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
   }
 
 */
-  private def testIntVals = 0 :: {for(i<-0 to 30) yield List(1<<i,-(1<<i))}.toList.flatten
-  private def testLongVals = 0l :: {for(i<-0 to 62) yield List(1l<<i,-(1l<<i))}.toList.flatten
+  private def testIntVals = 0 :: {
+    for (i <- 0 to 30) yield List(1 << i, -(1 << i))
+  }.toList.flatten
+
+  private def testLongVals = 0l :: {
+    for (i <- 0 to 62) yield List(1l << i, -(1l << i))
+  }.toList.flatten
 
 
 }

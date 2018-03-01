@@ -4,27 +4,34 @@ import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.commands.Cmd._
 import com.impactua.redis.commands.GenericCommands._
 import com.impactua.redis.connections._
+import com.impactua.redis.utils.ScanResult
 import com.impactua.redis.{BinaryConverter, KeyType, RedisClient}
 
 import scala.collection.Set
 import scala.concurrent.Future
 
 /**
- * http://redis.io/commands#generic
- * http://redis.io/commands#connection
- */
+  * http://redis.io/commands#generic
+  * http://redis.io/commands#connection
+  */
 private[redis] trait GenericCommands extends ClientCommands {
   self: RedisClient =>
 
   def delAsync(key: String*): Future[Int] = r.send(Del(key)).map(integerResultAsInt)
 
-  def del(key: String*): Int = await { delAsync(key:_*) }
+  def del(key: String*): Int = await {
+    delAsync(key: _*)
+  }
 
   def existsAsync(key: String): Future[Boolean] = r.send(Exists(key)).map(integerResultAsBoolean)
+
   def exists(key: String): Boolean = await(existsAsync(key))
 
   def expireAsync(key: String, seconds: Int): Future[Boolean] = r.send(Expire(key, seconds)).map(integerResultAsBoolean)
-  def expire(key: String, seconds: Int): Boolean = await { expireAsync(key, seconds) }
+
+  def expire(key: String, seconds: Int): Boolean = await {
+    expireAsync(key, seconds)
+  }
 
   def keysAsync(pattern: String): Future[Set[String]] =
     r.send(Keys(pattern)).map(multiBulkDataResultToSet(BinaryConverter.StringConverter))
@@ -39,7 +46,10 @@ private[redis] trait GenericCommands extends ClientCommands {
   def keytype(key: String): KeyType = await(keytypeAsync(key))
 
   def persistAsync(key: String): Future[Boolean] = r.send(Persist(key)).map(integerResultAsBoolean)
-  def persist(key: String): Boolean = await { persistAsync(key) }
+
+  def persist(key: String): Boolean = await {
+    persistAsync(key)
+  }
 
   def renameAsync(key: String, newKey: String, notExist: Boolean = true): Future[Boolean] =
     r.send(Rename(key, newKey, notExist)).map(integerResultAsBoolean)
@@ -50,9 +60,14 @@ private[redis] trait GenericCommands extends ClientCommands {
 
 
   def ttlAsync(key: String): Future[Int] = r.send(Ttl(key)).map(integerResultAsInt)
-  def ttl(key: String): Int = await { ttlAsync(key) }
 
-  def flushall = await { r.send(FlushAll()) }
+  def ttl(key: String): Int = await {
+    ttlAsync(key)
+  }
+
+  def flushall = await {
+    r.send(FlushAll())
+  }
 
   def ping(): Boolean = await {
     r.send(Ping()).map {
@@ -66,7 +81,7 @@ private[redis] trait GenericCommands extends ClientCommands {
     case _ => false
   }
 
-  def info: Map[String,String] = await {
+  def info: Map[String, String] = await {
     r.send(Info()).map {
       case BulkDataResult(Some(data)) =>
         val info = BinaryConverter.StringConverter.read(data)
@@ -76,9 +91,18 @@ private[redis] trait GenericCommands extends ClientCommands {
   }
 
   def auth(password: String): Boolean = await(authAsync(password))
+
   def authAsync(password: String): Future[Boolean] = r.send(Auth(password)).map(okResultAsBoolean)
+
   def select(db: Int): Boolean = await(r.send(Select(db)).map(okResultAsBoolean))
+
   def selectAsync(db: Int): Future[Boolean] = r.send(Select(db)).map(okResultAsBoolean)
+
+  def scanAsync(cursor: Int, count: Int = 10, pattern: Option[String] = None): Future[ScanResult] = {
+    r.send(Scan(cursor, count, pattern)).map(multiBulkResultToScanResult)
+  }
+
+  def scan(cursor: Int, count: Int = 10, pattern: Option[String] = None): ScanResult = await(scanAsync(cursor, count, pattern))
 
 }
 
@@ -137,6 +161,13 @@ object GenericCommands {
 
   case class Rename(key: String, newKey: String, nx: Boolean) extends Cmd {
     def asBin = Seq(if (nx) RENAMENX else RENAME, stringConverter.write(key), stringConverter.write(newKey))
+  }
+
+  case class Scan(cursor: Int, count: Int, pattern: Option[String]) extends Cmd {
+    override def asBin: Seq[Array[Byte]] = {
+      val scanMatch = pattern.map(pattern => Seq(MATCH, stringConverter.write(pattern))).getOrElse(Seq.empty[Array[Byte]])
+      Seq(SCAN, intConverter.write(cursor)) ++ scanMatch ++ Seq(COUNT, intConverter.write(count))
+    }
   }
 
 }

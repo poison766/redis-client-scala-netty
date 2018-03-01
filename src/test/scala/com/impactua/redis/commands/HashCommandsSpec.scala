@@ -1,6 +1,7 @@
 package com.impactua.redis.commands
 
 import com.impactua.redis.TestClient
+import com.impactua.redis.utils.HScanResult
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
@@ -84,6 +85,12 @@ class HashCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.hincrbyfloat[Double]("key-hincrbyfloat", "f0", 25.0) shouldEqual 50.0
     client.hincrbyfloat[Double]("key-hincrbyfloat", "f0", -24.0) shouldEqual 26.0
     client.hincrbyfloat[Double]("key-hincrbyfloat", "f0") shouldEqual 27.0
+  }
+
+  "A hscan" should "iterates fields of Hash types and their associated values" in {
+    client.hset("key-hscan", "name", "Jack")
+    client.hset("key-hscan", "age", "23")
+    client.hscan[String, String]("key-hscan") shouldEqual HScanResult[String, String](0, Map("name" -> "Jack", "age" -> "23"))
   }
 }
 

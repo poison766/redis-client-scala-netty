@@ -5,6 +5,7 @@ import com.impactua.redis.commands.ClientCommands._
 import com.impactua.redis.commands.Cmd._
 import com.impactua.redis.commands.SortedSetCommands._
 import com.impactua.redis.utils.Options.Limit
+import com.impactua.redis.utils.ScanResult
 import com.impactua.redis.utils.SortedSetOptions.{Agregation, SumAgregation, ZaddOptions}
 
 import scala.collection.Set
@@ -199,6 +200,12 @@ private[redis] trait SortedSetCommands extends ClientCommands {
     zunionstoreAsync(dstZsetName, zsetNumber, srcZets, weights, agregationFunc)
   }
 
+  def zscanAsync(key: String, cursor: Int = 0, count: Int = 10, pattern: Option[String] = None): Future[ScanResult] = {
+    r.send(ZScan(key, cursor, count, pattern)).map(multiBulkResultToScanResult)
+  }
+
+  def zscan(key: String, cursor: Int = 0, count: Int = 10, pattern: Option[String] = None): ScanResult = await(zscanAsync(key, cursor, count, pattern))
+
 }
 
 object SortedSetCommands {
@@ -326,4 +333,12 @@ object SortedSetCommands {
         _weights ++ Seq("AGGREGATE".getBytes(charset), agregationFunc.asBin)
     }
   }
+
+  case class ZScan(key: String, cursor: Int, count: Int, pattern: Option[String]) extends Cmd {
+    override def asBin: Seq[Array[Byte]] = {
+      val scanMatch = pattern.map(p => Seq(MATCH, stringConverter.write(p))).getOrElse(Seq.empty[Array[Byte]])
+      Seq(ZSCAN, stringConverter.write(key), intConverter.write(cursor)) ++ scanMatch ++ Seq(COUNT, intConverter.write(count))
+    }
+  }
+
 }

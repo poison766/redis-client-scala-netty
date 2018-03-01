@@ -17,6 +17,9 @@ private[redis] object Cmd {
 
   val WITHSCORES = "WITHSCORES".getBytes
 
+  val MATCH = "MATCH".getBytes
+  val COUNT = "COUNT".getBytes
+
   // set
   val SADD = "SADD".getBytes
   val SCARD = "SCARD".getBytes
@@ -32,7 +35,7 @@ private[redis] object Cmd {
   val SREM = "SREM".getBytes
   val SUNION = "SUNION".getBytes
   val SUNIONSTORE = "SUNIONSTORE".getBytes
-  val SSCAN = "SSCAN".getBytes //TODO
+  val SSCAN = "SSCAN".getBytes
 
   // hash
   val HDEL = "HDEL".getBytes
@@ -48,7 +51,7 @@ private[redis] object Cmd {
   val HSET = "HSET".getBytes
   val HSETNX = "HSETNX".getBytes
   val HVALS = "HVALS".getBytes
-  val HSCAN = "HSCAN".getBytes //TODO
+  val HSCAN = "HSCAN".getBytes
   val HSTRLEN = "HSTRLEN".getBytes
 
   // string
@@ -103,7 +106,7 @@ private[redis] object Cmd {
   val RENAMENX = "RENAMENX".getBytes
   val RESTORE = "RESTORE".getBytes //not used
   val SCAN = "SCAN".getBytes // TODO:
-  val SORT = "SORT".getBytes
+  val SORT = "SORT".getBytes // TODO
   val TOUCH = "TOUCH".getBytes // TODO since 3.2.1
   val TTL = "TTL".getBytes
   val TYPE = "TYPE".getBytes

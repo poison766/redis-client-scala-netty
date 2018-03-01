@@ -1,6 +1,7 @@
 package com.impactua.redis.commands
 
 import com.impactua.redis.TestClient
+import com.impactua.redis.utils.ScanResult
 import org.scalatest.{FlatSpec, Matchers}
 
 /**
@@ -110,6 +111,11 @@ class SetCommandsSpec extends FlatSpec with Matchers with TestClient {
   "A srandmember" should "return random elem from given set" in {
     client.sadd("key-srandmember", 6, 7, 8, 9) shouldEqual 4
     client.srandmember[Int]("key-srandmember") should contain oneOf(6, 7, 8, 9)
+  }
+
+  "A sscan" should "return random elem from given set" in {
+    client.sadd("key-sscan", "1", "2", "3", "foo", "foobar", "feelsgood") shouldEqual 6
+    client.sscan("key-sscan", 0, 10, Some("f*")) shouldEqual ScanResult(0, Set("foo",  "feelsgood", "foobar"))
   }
 
 }

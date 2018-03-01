@@ -2,6 +2,7 @@ package com.impactua.redis.commands
 
 import com.impactua.redis.{RedisException, TestClient}
 import com.impactua.redis.utils.Options.Limit
+import com.impactua.redis.utils.ScanResult
 import com.impactua.redis.utils.SortedSetOptions.ZaddOptions
 import com.impactua.redis.utils.SortedSetOptions.ZaddOptions.{NO, NX, XX}
 import org.scalatest.{FlatSpec, Matchers}
@@ -148,6 +149,11 @@ class SortedSetCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.zadd[String]("zset-zunionstore2", (1F, "a"), (2F, "b")) shouldEqual 2
     client.zunionstore("out", 2, Seq("zset-zunionstore1", "zset-zunionstore2"), Seq(2D, 3D)) shouldEqual 3
     client.zrangeWithScores[String]("out", 0, -1) shouldEqual Map("a" -> 5F, "c" -> 6F, "b" -> 10F)
+  }
+
+  "A zscan" should "iterates elements of Sorted Set types and their associated scores" in {
+    client.zadd[String]("zset-zscan", (1F, "a"), (2F, "b"), (3F, "c")) shouldEqual 3
+    client.zscan("key-zscan") shouldEqual ScanResult(0, Set("foo",  "feelsgood", "foobar"))
   }
   
 }
