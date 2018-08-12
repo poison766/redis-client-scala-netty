@@ -6,11 +6,11 @@ import com.impactua.redis.primitives.Redlock._
 
 class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
 
-  "A ping" should "just work" in {
+  "A ping" should "just work" ignore {
     client.ping shouldBe true
   }
 
-  "An exists" should "check if key exists" in {
+  "An exists" should "check if key exists" ignore {
     client.exists("foo") shouldBe false
     client.set("foo", "bar", 1) shouldBe true
     client.exists("foo") shouldBe true
@@ -20,7 +20,7 @@ class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.ttl("foo") shouldEqual -2
   }
 
-  "An expire" should "expire keys" in {
+  "An expire" should "expire keys" ignore {
     client.set("foo", "bar") shouldBe true
     client.expire("foo", 100) shouldBe true
     client.ttl("foo") shouldEqual 100
@@ -30,10 +30,10 @@ class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
   }
 
   "Keys" should "return all matched keys" in {
-    client.set("prefix:1" -> 1, "prefix:2" -> 2)
-    client.keys("prefix:*") shouldEqual Set("prefix:1", "prefix:2")
-    client.del("prefix:1")
-    client.del("prefix:2")
+    client.set("prefix:1" -> 1, "prefix:2" -> 2) shouldBe true
+    client.keys("prefix:*") shouldEqual Set("prefix:2", "prefix:1")
+    client.del("prefix:1") shouldBe 1
+    client.del("prefix:2") shouldBe 1
   }
 
   "A transaction" should "allow to set values" in {

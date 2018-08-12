@@ -52,6 +52,7 @@ private[commands] object ClientCommands {
 
   def multiBulkDataResultToSet[T](conv: BinaryConverter[T]): PartialFunction[Result, Set[T]] = {
     case MultiBulkDataResult(results) => filterEmptyAndMap(results, conv).toSet
+
   }
 
   def multiBulkDataResultToLinkedSet[T](conv: BinaryConverter[T]): PartialFunction[Result, Set[T]] = {

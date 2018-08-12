@@ -4,8 +4,8 @@ import java.util
 
 import com.impactua.redis._
 import com.impactua.redis.codecs.RedisArrayAgregatorDecoder.AggregateState
-import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.MessageToMessageDecoder
+import org.jboss.netty.channel.{Channel, ChannelHandlerContext}
+import org.jboss.netty.handler.codec.oneone.OneToOneDecoder
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -13,29 +13,35 @@ import scala.collection.mutable.ArrayBuffer
   * @author Yaroslav Derman <yaroslav.derman@gmail.com>.
   *         created on 13.03.2017.
   */
-class RedisArrayAgregatorDecoder extends MessageToMessageDecoder[RedisMessage] {
+//ChannelUpstreamHandler
+class RedisArrayAgregatorDecoder extends OneToOneDecoder {
 
   val queue: util.Deque[AggregateState] = new util.ArrayDeque[AggregateState]
 
-  override def decode(ctx: ChannelHandlerContext, msg: RedisMessage, out: util.List[AnyRef]): Unit = {
-    msg match {
+  override def decode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
+    //nothing do -> decode
+    //out.add(obj) -> obj
+    println("!!!ArrayAgregator `" + msg + "`")
+    msg.asInstanceOf[RedisMessage] match {
       case header: ArrayHeaderRedisMessage if header.length == 0 =>
-        out.add(EmptyArrayRedisMessage)
+        EmptyArrayRedisMessage
 
       case header: ArrayHeaderRedisMessage if header.length == -1 =>
-        out.add(NullRedisMessage)
+        NullRedisMessage
 
       case ArrayHeaderRedisMessage(length) if queue.isEmpty =>
         queue.push(new AggregateState(length))
+        null
 
       case ArrayHeaderRedisMessage(length) if !queue.isEmpty =>
         queue.push(new AggregateState(length))
+        null
 
       case proxyMsg if queue.isEmpty =>
-        out.add(proxyMsg)
+        proxyMsg
 
       case partMsg if !queue.isEmpty =>
-
+        println("part message " + partMsg)
         var promMsg: RedisMessage = partMsg
 
         while (!queue.isEmpty) {
@@ -46,12 +52,11 @@ class RedisArrayAgregatorDecoder extends MessageToMessageDecoder[RedisMessage] {
             promMsg = ArrayRedisMessage(current.msgs.toList)
             queue.pop()
           } else {
-            promMsg = null
-            return
+            return null
           }
         }
-
-        Option(promMsg).foreach(msg => out.add(msg))
+        println("prom messages:" + partMsg)
+        promMsg
     }
   }
 

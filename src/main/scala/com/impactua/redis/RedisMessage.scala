@@ -1,7 +1,7 @@
 package com.impactua.redis
 
 import com.impactua.redis.connections.BulkDataResult
-import io.netty.util.CharsetUtil
+import org.jboss.netty.util.CharsetUtil
 
 /**
   * @author Yaroslav Derman <yaroslav.derman@gmail.com>.
