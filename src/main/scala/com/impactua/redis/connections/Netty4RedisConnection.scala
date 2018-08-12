@@ -12,6 +12,7 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.Unpooled
 import io.netty.channel._
 import io.netty.channel.epoll.{EpollEventLoopGroup, EpollSocketChannel}
+import io.netty.channel.kqueue.{KQueueEventLoopGroup, KQueueSocketChannel}
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
@@ -59,9 +60,12 @@ class Netty4RedisConnection(val host: String, val port: Int) extends RedisConnec
   private def selectTransportProtocol = {
     val osName = Option(System.getProperties.getProperty("os.name")).map(_.toLowerCase)
     val isUnix = osName.exists(os => os.contains("nix") || os.contains("nux") || os.contains("aix"))
+    val isMac = osName.exists(os => os.contains("mac"))
 
     if (isUnix) {
       new EpollEventLoopGroup() -> classOf[EpollSocketChannel]
+    } else if (isMac){
+      new KQueueEventLoopGroup() -> classOf[KQueueSocketChannel]
     } else {
       new NioEventLoopGroup() -> classOf[NioSocketChannel]
     }
