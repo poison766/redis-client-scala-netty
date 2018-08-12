@@ -19,23 +19,19 @@ class RedisArrayAgregatorDecoder extends MessageToMessageDecoder[RedisMessage] {
 
   override def decode(ctx: ChannelHandlerContext, msg: RedisMessage, out: util.List[AnyRef]): Unit = {
     msg match {
-      case header: ArrayHeaderRedisMessage if header.length == 0 =>
+      case ArrayHeaderRedisMessage(0) =>
         out.add(EmptyArrayRedisMessage)
 
-      case header: ArrayHeaderRedisMessage if header.length == -1 =>
+      case ArrayHeaderRedisMessage(-1) =>
         out.add(NullRedisMessage)
 
-      case ArrayHeaderRedisMessage(length) if queue.isEmpty =>
-        queue.push(new AggregateState(length))
-
-      case ArrayHeaderRedisMessage(length) if !queue.isEmpty =>
+      case ArrayHeaderRedisMessage(length) =>
         queue.push(new AggregateState(length))
 
       case proxyMsg if queue.isEmpty =>
         out.add(proxyMsg)
 
       case partMsg if !queue.isEmpty =>
-
         var promMsg: RedisMessage = partMsg
 
         while (!queue.isEmpty) {

@@ -79,7 +79,7 @@ class Netty4RedisConnection(val host: String, val port: Int) extends RedisConnec
         override def initChannel(ch: SocketChannel): Unit = {
           val pipeline = ch.pipeline()
 
-          pipeline.addLast("response_frame_decoder", new DelimiterBasedFrameDecoder(512 * 1024 * 1024, false, Unpooled.wrappedBuffer("\r\n".getBytes)))
+          pipeline.addLast("response_frame_decoder", new DelimiterBasedFrameDecoder(512 * 1024 * 1024, true, Unpooled.wrappedBuffer("\r\n".getBytes)))
           pipeline.addLast("response_decoder", new RedisResponseDecoder())
           pipeline.addLast("response_array_agregator", new RedisArrayAgregatorDecoder())
           pipeline.addLast("response_handler", new RedisResponseHandler(clientState))

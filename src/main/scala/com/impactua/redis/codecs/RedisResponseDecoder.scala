@@ -4,10 +4,10 @@ import java.nio.charset.Charset
 import java.util
 
 import com.impactua.redis._
-import io.netty.buffer.ByteBuf
+import io.netty.buffer.{ByteBuf, ByteBufUtil}
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
-import io.netty.util.{ByteProcessor, CharsetUtil}
+import io.netty.util.CharsetUtil
 
 /**
   * @author Yaroslav Derman <yaroslav.derman@gmail.com>.
@@ -15,10 +15,9 @@ import io.netty.util.{ByteProcessor, CharsetUtil}
   */
 private[redis] class RedisResponseDecoder extends ByteToMessageDecoder with ChannelExceptionHandler {
 
-  val charset: Charset = CharsetUtil.UTF_8
+  val utf8: Charset = CharsetUtil.UTF_8
   var responseType: ResponseType = Unknown
 
-  //TODO: split into frame without '/r/n'
   override def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
     responseType match {
       case Unknown if in.isReadable =>
@@ -26,65 +25,43 @@ private[redis] class RedisResponseDecoder extends ByteToMessageDecoder with Chan
 
       case Unknown if !in.isReadable =>
 
-      case BulkData => readAsciiLine(in).foreach { line =>
-        line.toInt match {
+      case BulkData =>
+        readInt(in) match {
           case -1 =>
             responseType = Unknown
             out.add(NullRedisMessage)
           case n =>
             responseType = BinaryData(n)
         }
-      }
 
-      case BinaryData(len) =>
-        if (in.readableBytes >= (len + 2)) {
-          // +2 for eol
-          responseType = Unknown
-          val bytes = new Array[Byte](len)
-          in.readBytes(bytes)
-          in.skipBytes(2)
-          out.add(RawRedisMessage(bytes))
-        }
+      case BinaryData(_) =>
+        val data = in.readBytes(in.readableBytes())
+        responseType = Unknown
+        out.add(RawRedisMessage(ByteBufUtil.getBytes(data)))
 
       case MultiBulkData =>
-        readAsciiLine(in).map { line =>
-          responseType = Unknown
-          out.add(ArrayHeaderRedisMessage(line.toInt))
-        }
+        responseType = Unknown
+        out.add(ArrayHeaderRedisMessage(readInt(in)))
 
       case Integer =>
-        readAsciiLine(in).map { line =>
-          responseType = Unknown
-          out.add(IntRedisMessage(line.toInt))
-        }
+        responseType = Unknown
+        out.add(IntRedisMessage(readInt(in)))
 
       case Error =>
-        readAsciiLine(in).map { line =>
-          responseType = Unknown
-          out.add(ErrorRedisMessage(line))
-        }
+        responseType = Unknown
+        out.add(ErrorRedisMessage(readString(in)))
 
       case SingleLine =>
-        readAsciiLine(in).map { line =>
-          responseType = Unknown
-          out.add(StringRedisMessage(line))
-        }
+        responseType = Unknown
+        out.add(StringRedisMessage(readString(in)))
     }
   }
 
-  private def findEndOfLine(buffer: ByteBuf): Int = {
-    val i = buffer.forEachByte(ByteProcessor.FIND_LF)
-    if (i > 0 && buffer.getByte(i - 1) == '\r') i - 1 else -1
-  }
+  private def readInt(buf: ByteBuf) = readString(buf).toInt
 
-  private def readAsciiLine(buf: ByteBuf): Option[String] = if (!buf.isReadable) None else {
-    findEndOfLine(buf) match {
-      case -1 => None
-      case n =>
-        val line = buf.toString(buf.readerIndex, n - buf.readerIndex, charset)
-        buf.skipBytes(line.length + 2)
-        Some(line)
-    }
+  private def readString(buf: ByteBuf) = {
+    val data = buf.readBytes(buf.readableBytes())
+    data.toString(utf8)
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {

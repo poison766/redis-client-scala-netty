@@ -4,9 +4,9 @@ organization := "com.impactua"
 
 version := sys.env.getOrElse("TRAVIS_TAG", "2.0.0")
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.6"
 
-crossScalaVersions := Seq("2.11.8", "2.12.0")
+crossScalaVersions := Seq("2.11.8", scalaVersion.value)
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
@@ -22,7 +22,7 @@ bintrayPackageLabels := Seq("scala", "redis", "netty")
 concurrentRestrictions in Global += Tags.limit(Tags.Test, 1)
 javaOptions in Test ++= Seq("-Dio.netty.leakDetection.level=PARANOID")
 
-val nettyVersion = "4.1.22.Final"
+val nettyVersion = "4.1.28.Final"
 
 libraryDependencies ++= Seq(
   "io.netty"           % "netty-handler"                % nettyVersion,
