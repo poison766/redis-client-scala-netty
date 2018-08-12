@@ -4,7 +4,7 @@ import java.nio.charset.Charset
 import java.util
 
 import com.impactua.redis._
-import io.netty.buffer.{ByteBuf, ByteBufUtil}
+import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
 import io.netty.util.CharsetUtil
@@ -35,9 +35,8 @@ private[redis] class RedisResponseDecoder extends ByteToMessageDecoder with Chan
         }
 
       case BinaryData(_) =>
-        val data = in.readBytes(in.readableBytes())
         responseType = Unknown
-        out.add(RawRedisMessage(ByteBufUtil.getBytes(data)))
+        out.add(RawRedisMessage(readBytes(in)))
 
       case MultiBulkData =>
         responseType = Unknown
@@ -57,11 +56,14 @@ private[redis] class RedisResponseDecoder extends ByteToMessageDecoder with Chan
     }
   }
 
-  private def readInt(buf: ByteBuf) = readString(buf).toInt
+  private def readInt(buf: ByteBuf): Int = readString(buf).toInt
 
-  private def readString(buf: ByteBuf) = {
-    val data = buf.readBytes(buf.readableBytes())
-    data.toString(utf8)
+  private def readString(buf: ByteBuf): String = new String(readBytes(buf), utf8)
+
+  private def readBytes(buf: ByteBuf): Array[Byte] = {
+    val bytes: Array[Byte] = new Array(buf.readableBytes())
+    buf.readBytes(bytes)
+    bytes
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
