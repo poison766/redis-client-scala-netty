@@ -19,9 +19,8 @@ class RedisArrayAgregatorDecoder extends OneToOneDecoder {
   val queue: util.Deque[AggregateState] = new util.ArrayDeque[AggregateState]
 
   override def decode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
-    //nothing do -> decode
+    //nothing do -> null
     //out.add(obj) -> obj
-    println("!!!ArrayAgregator `" + msg + "`")
     msg.asInstanceOf[RedisMessage] match {
       case header: ArrayHeaderRedisMessage if header.length == 0 =>
         EmptyArrayRedisMessage
@@ -41,7 +40,6 @@ class RedisArrayAgregatorDecoder extends OneToOneDecoder {
         proxyMsg
 
       case partMsg if !queue.isEmpty =>
-        println("part message " + partMsg)
         var promMsg: RedisMessage = partMsg
 
         while (!queue.isEmpty) {
@@ -55,7 +53,6 @@ class RedisArrayAgregatorDecoder extends OneToOneDecoder {
             return null
           }
         }
-        println("prom messages:" + partMsg)
         promMsg
     }
   }

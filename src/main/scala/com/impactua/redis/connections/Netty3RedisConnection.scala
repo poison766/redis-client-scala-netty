@@ -60,8 +60,8 @@ class Netty3RedisConnection(val host: String, val port: Int) extends RedisConnec
     clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       override def getPipeline = {
         val p = Channels.pipeline
-        //new DelimiterBasedFrameDecoder(512 * 1024 * 1024, false, Unpooled.wrappedBuffer("\r\n".getBytes))
-        p.addLast("response_frame_delimeter", new DelimiterBasedFrameDecoder(512 * 1024 * 1024, false, ChannelBuffers.copiedBuffer("\r\n".getBytes)))
+
+        p.addLast("response_frame_delimiter", new DelimiterBasedFrameDecoder(512 * 1024 * 1024, true, ChannelBuffers.copiedBuffer("\r\n".getBytes)))
         p.addLast("response_decoder", new RedisResponseDecoder())
         p.addLast("response_array_agregator", new RedisArrayAgregatorDecoder())
         p.addLast("response_accumulator", new RedisResponseHandler(clientState))

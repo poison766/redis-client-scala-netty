@@ -6,11 +6,11 @@ import com.impactua.redis.primitives.Redlock._
 
 class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
 
-  "A ping" should "just work" ignore {
+  "A ping" should "just work" in {
     client.ping shouldBe true
   }
 
-  "An exists" should "check if key exists" ignore {
+  "An exists" should "check if key exists" in {
     client.exists("foo") shouldBe false
     client.set("foo", "bar", 1) shouldBe true
     client.exists("foo") shouldBe true
@@ -20,7 +20,7 @@ class GenericCommandsSpec extends FlatSpec with Matchers with TestClient {
     client.ttl("foo") shouldEqual -2
   }
 
-  "An expire" should "expire keys" ignore {
+  "An expire" should "expire keys" in {
     client.set("foo", "bar") shouldBe true
     client.expire("foo", 100) shouldBe true
     client.ttl("foo") shouldEqual 100

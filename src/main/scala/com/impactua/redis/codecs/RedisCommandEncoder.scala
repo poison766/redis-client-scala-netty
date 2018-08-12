@@ -16,7 +16,6 @@ private[redis] class RedisCommandEncoder extends OneToOneEncoder {
 
   override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
     val opFuture = msg.asInstanceOf[ResultFuture]
-    println("Send command" + opFuture.cmd)
     binaryCmd(opFuture.cmd.asBin)
   }
 
