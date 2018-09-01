@@ -13,7 +13,7 @@ import com.impactua.redis.commands.PubSubCommands.{Subscribe, Unsubscribe}
   * more than one response. E.g. Subscribe/Unsibscribe commands receive separate BulkDataResult
   * for each specified channel, all other commands has one to one relationship with responses.
   */
-sealed abstract class ConnectionState(queue: BlockingQueue[ResultFuture]) {
+sealed abstract class ConnectionState(val queue: BlockingQueue[ResultFuture]) {
 
   var currentComplexResponse: Option[ResultFuture] = None
 
@@ -53,7 +53,7 @@ sealed abstract class ConnectionState(queue: BlockingQueue[ResultFuture]) {
   *
   * @param queue queue of result promises holders.
   */
-case class NormalConnectionState(queue: BlockingQueue[ResultFuture]) extends ConnectionState(queue) {
+case class NormalConnectionState(override val queue: BlockingQueue[ResultFuture]) extends ConnectionState(queue) {
   def handle(r: Result): Option[ConnectionState] = r match {
     case r: SuccessResult =>
       val respFuture = fillSuccessResult(r)
@@ -79,7 +79,7 @@ case class NormalConnectionState(queue: BlockingQueue[ResultFuture]) extends Con
   * @param queue     commands queue to process
   * @param subscribe subscribe command that caused state change.
   */
-case class SubscribedConnectionState(queue: BlockingQueue[ResultFuture], subscribe: Subscribe) extends ConnectionState(queue) {
+case class SubscribedConnectionState(override val queue: BlockingQueue[ResultFuture], subscribe: Subscribe) extends ConnectionState(queue) {
 
   type Subscriber = MultiBulkDataResult => Unit
 

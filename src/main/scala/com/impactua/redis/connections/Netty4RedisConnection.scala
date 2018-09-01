@@ -1,6 +1,7 @@
 package com.impactua.redis.connections
 
 import java.net.InetSocketAddress
+import java.util.Date
 import java.util.concurrent._
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
@@ -23,32 +24,36 @@ import scala.util.Try
 
 object Netty4RedisConnection {
 
-  private[redis] val cmdQueue = new ArrayBlockingQueue[(Netty4RedisConnection, ResultFuture)](2048)
+  //private[redis] val cmdQueue = new ArrayBlockingQueue[(Netty4RedisConnection, ResultFuture)](2048)
   private[redis] val commandEncoder = new RedisCommandEncoder()
 
-  private[redis] val queueProcessor = new Runnable {
-    override def run() = {
-      while (true) {
-        val (conn, f) = cmdQueue.take()
-        try {
-          if (conn.isOpen) {
-            conn.enqueue(f)
-          } else {
-            conn.reconnect()
-            f.promise.failure(new IllegalStateException("Channel closed, command: " + f.cmd))
-          }
-        } catch {
-          case e: Exception =>
-            f.promise.failure(e); conn.shutdown()
-        }
-      }
-    }
-  }
+  println("********** Without thread")
 
-  new Thread(queueProcessor, "Queue Processor").start()
+//  private[redis] val queueProcessor = new Runnable {
+//    override def run() = {
+//      while (true) {
+//        val (conn, f) = cmdQueue.take()
+//        try {
+//          if (conn.isOpen) {
+//            //WTF: in different threads
+//            conn.enqueue(f)
+//          } else {
+//            conn.reconnect()
+//            f.promise.failure(new IllegalStateException("Channel closed, command: " + f.cmd))
+//          }
+//        } catch {
+//          case e: Exception =>
+//            f.promise.failure(e); conn.shutdown()
+//        }
+//      }
+//    }
+//  }
+//
+//  new Thread(queueProcessor, "Queue Processor").start()
 }
 
 class Netty4RedisConnection(val host: String, val port: Int) extends RedisConnection {
+  self =>
 
   private[Netty4RedisConnection] val isRunning = new AtomicBoolean(true)
   private[Netty4RedisConnection] val isConnecting = new AtomicBoolean(false)
@@ -86,6 +91,7 @@ class Netty4RedisConnection(val host: String, val port: Int) extends RedisConnec
           pipeline.addLast("response_frame_decoder", new DelimiterBasedFrameDecoder(512 * 1024 * 1024, true, Unpooled.wrappedBuffer("\r\n".getBytes)))
           pipeline.addLast("response_decoder", new RedisResponseDecoder())
           pipeline.addLast("response_array_agregator", new RedisArrayAgregatorDecoder())
+          //client state contains opQueue with result future que
           pipeline.addLast("response_handler", new RedisResponseHandler(clientState))
 
           pipeline.addLast("request_command_encoder", commandEncoder)
@@ -144,7 +150,11 @@ class Netty4RedisConnection(val host: String, val port: Int) extends RedisConnec
       throw new RedisException("Connection closed")
     }
     val f = ResultFuture(cmd)
-    cmdQueue.offer((this, f), 10, TimeUnit.SECONDS)
+    //println(new Date() + s"**** Send command $cmd completed")
+    //TODO: offer and flush as atomic/synchronized or move to encoder
+    opQueue.offer(f, 10, TimeUnit.SECONDS)
+    channel.get().writeAndFlush(f).addListener(ChannelFutureListener.CLOSE_ON_FAILURE)
+
     f.future
   }
 

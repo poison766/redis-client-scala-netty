@@ -1,10 +1,14 @@
 package com.impactua.redis.codecs
 
+import java.util.Date
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.atomic.AtomicReference
 
 import com.impactua.redis._
 import com.impactua.redis.connections._
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
+
+import scala.annotation.tailrec
 
 /**
   * @author Yaroslav Derman <yaroslav.derman@gmail.com>.
@@ -15,7 +19,26 @@ private[redis] class RedisResponseHandler(connStateRef: AtomicReference[Connecti
   final val BULK_NONE = BulkDataResult(None)
   final val EMPTY_MULTIBULK = MultiBulkDataResult(Nil)
 
+  @tailrec
+  private def fillErrors(queue: BlockingQueue[ResultFuture]): Unit = {
+    queue.poll() match {
+      case null =>
+      case el =>
+        el.fillWithFailure(ErrorResult("Interrupted while waiting for connection"))
+        fillErrors(queue)
+    }
+  }
+
+  override def channelInactive(ctx: ChannelHandlerContext): Unit = {
+    // close all future with error
+    super.channelInactive(ctx)
+    //TODO: via atomic ?!
+    val state = connStateRef.get()
+    fillErrors(state.queue)
+  }
+
   override def channelRead0(ctx: ChannelHandlerContext, msg: RedisMessage): Unit = {
+    //println(new Date() +  "------------ response " + msg)
     msg match {
       case ErrorRedisMessage(error) => handleResult(ErrorResult(error))
       case StringRedisMessage(content) => handleResult(SingleLineResult(content))
